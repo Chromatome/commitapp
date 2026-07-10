@@ -43,7 +43,7 @@ const NEW_ARTISTS: Commission[] = [
 const ALL_COMMISSIONS = [...PROMOTED, ...RECOMMENDED, ...NEW_ARTISTS];
 
 const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) => (
-  <button className="mp-card" type="button">
+  <a className="mp-card" type="button" href={`/commission?id=${commission.id}`} aria-label={`View details for ${commission.title} by ${commission.artist}`}>
     {/* Thumbnail placeholder */}
     <div className="mp-thumb" aria-hidden="true" />
     <div className="mp-card-meta">
@@ -58,7 +58,7 @@ const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) =>
         ))}
       </span>
     </div>
-  </button>
+  </a>
 );
 
 const Section: React.FC<{ title: string; commissions: Commission[] }> = ({ title, commissions }) => (

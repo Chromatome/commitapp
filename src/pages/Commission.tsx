@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import '../styles/styles.css';
 import '../styles/commissioninfo.css';
 
+import logo from '../assets/logo.png';
+
 type Review = {
   id: number;
   customer: string;
@@ -116,10 +118,11 @@ const CommissionInfo: React.FC = () => {
       {/* Header (matches marketplace) */}
       <header className="ci-header">
         <a className="ci-logo" href="/" aria-label="CommIt home">
-          <svg className="ci-logo-star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 2l2.9 6.26L21.8 9.27l-5 4.87 1.18 6.88L12 17.77 6.02 21l1.18-6.86-5-4.87 6.9-1.01L12 2z" />
-          </svg>
-          <span className="ci-logo-text">CommIt</span>
+          <img 
+            src={logo} 
+            alt="CommIt logo" 
+            className="ci-logo-img"
+        />
         </a>
 
         <div className="ci-header-right">
