@@ -20,6 +20,7 @@ const COMMISSION = {
   artist: {
     name: 'Artist Name',
     reputation: 89,
+    review: "This artist is known for their exceptional attention to detail and timely delivery.",
   },
   description: {
     paymentType: 'Installments Per Phase (Even)',
@@ -205,8 +206,11 @@ const CommissionInfo: React.FC = () => {
               <Avatar size={48} />
             </a>
             <div className="ci-artist-meta">
-              <span className="ci-artist-name">{COMMISSION.artist.name}</span>
-              <span className="ci-artist-rep">{COMMISSION.artist.reputation}/100 Reputation</span>
+                <span className="ci-artist-name">{COMMISSION.artist.name}</span>
+                <span className="ci-artist-reputation">
+                    <span className="ci-artist-rep">{COMMISSION.artist.reputation}/100 Reputation</span>
+                    <span className="ci-artist-review">{COMMISSION.artist.review}</span>
+                </span>
             </div>
           </div>
 

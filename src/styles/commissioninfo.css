@@ -279,9 +279,9 @@
 
 .ci-artist-meta {
   display: flex;
-  align-items: baseline;
+  flex-direction: row;
+    align-items: center;
   gap: 1rem;
-  flex-wrap: wrap;
 }
 
 .ci-artist-name {
@@ -290,9 +290,27 @@
   color: #0a0a0a;
 }
 
+.ci-artist-reputation {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+}
+
 .ci-artist-rep {
   font-size: 1.1rem;
   color: #4a4a4a;
+  flex-grow: 1;
+}
+
+.ci-artist-review {
+    --fp-dark: oklch(from var(--filter-purple) calc(l - 0.05) c h);
+
+    font-size: 0.95rem;
+    color: var(--fp-dark);
+    border: 1px solid var(--fp-dark);
+    background-color: #d9c9f0;
+    padding: 1rem;
+    border-radius: 15px;
 }
 
 /* Generic panel */
