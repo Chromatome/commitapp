@@ -2,3 +2,14 @@
 /* NOTE: Use seperate CSS files per page. */
 
 @import 'tailwindcss';
+
+:root {
+    --periwinkle: #9c9cf0;
+    --periwinkle-dark: #8686e6;
+    --lavender-bg: #ecd6f4;
+    --card-gray: #eeeeee;
+    --thumb-purple: #b9a4e3;
+    --filter-purple: #9a6fc7;
+    --filter-purple-active: #7d4fb0;
+    --logo-pink: #e0499a;
+}

@@ -4,6 +4,7 @@ import './index.css'
 import LandingPage from './pages/LandingPage.tsx'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import MarketPlace from './pages/Marketplace.tsx'
+import CommissionInfo from './pages/Commission.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -11,7 +12,7 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/marketplace" element={<MarketPlace />} />
-        
+        <Route path="/commission" element={<CommissionInfo />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
