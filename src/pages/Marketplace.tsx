@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import '../styles/styles.css';
 import '../styles/marketplace.css';
-
-import logo from "../assets/logo.png";
+import Navbar from '../components/Navbar';
 
 type Commission = {
   id: number;
@@ -89,7 +88,7 @@ const MarketPlace: React.FC = () => {
     setQuery('');
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: React.SubmitEvent) => {
     e.preventDefault();
     setQuery(searchInput.trim());
   };
@@ -113,36 +112,7 @@ const MarketPlace: React.FC = () => {
   return (
     <div className="marketplace-page">
 
-      {/* Header */}
-      <header className="mp-header">
-        <a className="mp-logo" type="button" aria-label="CommIt home" href="/">
-          <img 
-            src={logo}
-            alt="CommIt Logo"
-            className="mp-logo-img"
-          />
-        </a>
-
-        <div className="mp-header-right">
-          <form className="mp-search-form" onSubmit={handleSearch} role="search">
-            <label className="sr-only" htmlFor="mp-search">
-              Search by artist or title
-            </label>
-            <input
-              id="mp-search"
-              className="mp-search-input"
-              type="text"
-              placeholder="Search by artist or title"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-            />
-            <button className="mp-search-btn" type="submit">
-              Search
-            </button>
-          </form>
-          <div className="mp-credits">Credits: 0000</div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Body */}
       <div className="mp-body">
@@ -180,6 +150,23 @@ const MarketPlace: React.FC = () => {
 
         {/* Main browse area */}
         <main className="mp-main">
+          <section className="mp-search">
+            <form className="mp-search-form" onSubmit={handleSearch}>
+              <input
+                type="text"
+                placeholder="Search by artist or title..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                aria-label="Search commissions by artist or title"
+              />
+              <button type="submit" aria-label="Search">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M10 2a8 8 0 105.293 14.707l4.147 4.147a1 1 0 001.414-1.414l-4.147-4.147A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z" />
+                </svg>
+              </button>
+            </form>
+          </section>
+          
           {isFiltering ? (
             <section className="mp-section">
               <div className="mp-results-header">

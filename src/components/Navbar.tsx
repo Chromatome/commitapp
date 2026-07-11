@@ -1,20 +1,22 @@
 import React from 'react';
 import '../styles/styles.css';
+import logo from "../assets/logo.png";
 
 const Navbar: React.FC = () => {
   return (
-    <nav className="navbar">
-      <div className="navbar-left">
+    <header className="navbar">
+      <a className="n-logo" href="/" aria-label="CommIt home">
         <img 
-          src="https://via.placeholder.com/150x40?text=Your+Logo" 
-          alt="Company Logo" 
-          className="navbar-logo" 
-        />
+          src={logo} 
+          alt="CommIt logo" 
+          className="n-logo-img"
+      />
+      </a>
+
+      <div className="n-header-right">
+        <div className="n-credits">Credits: 0</div>
       </div>
-      <div className="navbar-right">
-        <button className="btn-primary">Sign Up</button>
-      </div>
-    </nav>
+    </header>
   );
 };
 

@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import '../styles/styles.css';
 import '../styles/commissioninfo.css';
-
-import logo from '../assets/logo.png';
+import Navbar from '../components/Navbar';
 
 type Review = {
   id: number;
@@ -117,28 +116,8 @@ const CommissionInfo: React.FC = () => {
   return (
     <div className="commission-page">
       {/* Header (matches marketplace) */}
-      <header className="ci-header">
-        <a className="ci-logo" href="/" aria-label="CommIt home">
-          <img 
-            src={logo} 
-            alt="CommIt logo" 
-            className="ci-logo-img"
-        />
-        </a>
-
-        <div className="ci-header-right">
-          <form className="ci-search-form" role="search" onSubmit={(e) => e.preventDefault()}>
-            <label className="sr-only" htmlFor="ci-search">
-              Search
-            </label>
-            <input id="ci-search" className="ci-search-input" type="text" placeholder="Search" />
-            <button className="ci-search-btn" type="submit">
-              Search
-            </button>
-          </form>
-          <div className="ci-credits">Credits: 0000</div>
-        </div>
-      </header>
+      <Navbar />
+      
 
       {/* Body */}
       <div className="ci-body">

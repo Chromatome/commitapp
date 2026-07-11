@@ -1,14 +1,6 @@
 /* Commission Info Page Styles */
 
 .commission-page {
-  --lavender-bg: #ecd6f4;
-  --card-gray: #d7d7d7;
-  --panel-gray: #eef0f4;
-  --panel-gray-2: #e2e5ec;
-  --showcase-navy: #262079;
-  --purple-btn: #b9a4e3;
-  --purple-btn-hover: #a98fd8;
-
   min-height: 100vh;
   background-color: var(--lavender-bg);
   color: #1a1a1a;
@@ -128,7 +120,7 @@
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 3rem;
-  background-image: linear-gradient(135deg, #2f2894 0%, #201b6b 100%);
+  /* background-image: linear-gradient(135deg, #2f2894 0%, #201b6b 100%); */
 }
 
 .ci-carousel-index {
@@ -310,7 +302,7 @@
     font-size: 0.95rem;
     color: var(--fp-dark);
     border: 1px solid var(--fp-dark);
-    background-color: #d9c9f0;
+    background-color: var(--fp);
     padding: 1rem;
     border-radius: 15px;
 }

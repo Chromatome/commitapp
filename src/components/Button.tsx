@@ -10,13 +10,15 @@ interface ButtonProps {
 
 const Button: React.FC<ButtonProps> = ({ label, onClick, color, style }) => {
     return (
-        <button
-            className="btn"
-            onClick={onClick}
-            style={{ "--btn-color": color, ...style } as React.CSSProperties}
-        >
-            {label}
-        </button>
+        <div className="btn-wrapper">
+            <button
+                className="btn"
+                onClick={onClick}
+                style={{ "--btn-color": color, ...style } as React.CSSProperties}
+            >
+                {label}
+            </button>
+        </div>
     );
 };
 
