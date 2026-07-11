@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import '../styles/styles.css';
 import '../styles/marketplace.css';
 import Navbar from '../components/Navbar';
+import Background from '../components/Background';
 
 type Commission = {
   id: number;
@@ -88,7 +89,7 @@ const MarketPlace: React.FC = () => {
     setQuery('');
   };
 
-  const handleSearch = (e: React.SubmitEvent) => {
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setQuery(searchInput.trim());
   };
@@ -111,6 +112,11 @@ const MarketPlace: React.FC = () => {
 
   return (
     <div className="marketplace-page">
+      <Background
+        direction="diagonal"
+        speed={0.3}
+        borderColor="rgba(0, 0, 0, 0.05)"
+      />
 
       <Navbar />
 

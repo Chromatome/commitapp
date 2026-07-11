@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import '../styles/styles.css';
 import '../styles/commissioninfo.css';
 import Navbar from '../components/Navbar';
+import Background from '../components/Background';
 
 type Review = {
   id: number;
@@ -115,6 +116,12 @@ const CommissionInfo: React.FC = () => {
 
   return (
     <div className="commission-page">
+      <Background
+        direction="diagonal"
+        speed={0.3}
+        borderColor="rgba(0, 0, 0, 0.05)"
+      />
+
       {/* Header (matches marketplace) */}
       <Navbar />
       
