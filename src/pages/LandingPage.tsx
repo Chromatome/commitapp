@@ -6,6 +6,7 @@ import example_art from "../assets/example_art.png";
 import "../styles/styles.css";
 import Background from '../components/Background';
 import Button from '../components/Button';
+import logo2 from "../assets/CommIt.svg";
 
 const LandingPage: React.FC = () => {
   const aboutRef = React.useRef<HTMLDivElement>(null);
@@ -38,7 +39,7 @@ const LandingPage: React.FC = () => {
           <div className="hero-content">
             <div className="hero-slogan">
               <div className="hero-logo">
-                CommIt
+                <img src={logo2} alt="CommIt Logo" />
               </div>
               for artists <br />and art enthusiasts
             </div>

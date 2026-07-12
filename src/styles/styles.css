@@ -73,8 +73,9 @@
     align-items: center;
     gap: 0.4rem;
     text-decoration: none;
-    height: 100px;
-    width: auto;
+    width: 200px;
+    height: auto;
+    margin: 1rem 0.4rem;
 }
 
 .n-logo-img {
