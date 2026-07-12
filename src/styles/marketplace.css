@@ -346,6 +346,20 @@
   aspect-ratio: auto;
 }
 
+/* In rows, keep tags on a single line so narrow cards don't grow taller.
+   Overflowing tags are clipped with a soft fade instead of wrapping. */
+.mp-row .mp-card-tags {
+  flex-wrap: nowrap;
+  overflow: hidden;
+  min-width: 0;
+  mask-image: linear-gradient(90deg, #000 calc(100% - 1rem), transparent);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 1rem), transparent);
+}
+
+.mp-row .mp-tag {
+  flex: 0 0 auto;
+}
+
 /* ---------- Cards ---------- */
 .mp-card {
   background: linear-gradient(180deg, #ffffff 0%, #f4f4f4 100%);
