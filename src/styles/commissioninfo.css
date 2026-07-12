@@ -1,94 +1,72 @@
-/* Commission Info Page Styles */
+/* Commission Info Page Styles — modern indie web look.
+   Matches the landing/marketplace: shiny beveled buttons, shaded panels,
+   and the interactive shapegrid background between elements. */
 
 .commission-page {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
-  background-color: var(--lavender-bg);
   color: #1a1a1a;
 }
 
-/* ---------- Header ---------- */
-.ci-header {
+/* ---------- Shared shaded-panel recipe ---------- */
+.commission-page {
+  --ci-panel-border: rgba(0, 0, 0, 0.16);
+  --ci-panel-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(240, 240, 240, 0.88) 100%
+  );
+  --ci-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Navbar (scoped so it doesn't clash with landing) ---------- */
+.commission-page .navbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background-color: var(--periwinkle);
   padding: 0 1.5rem;
+  background-color: var(--purple);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  border-bottom: 1px solid oklch(from var(--purple) calc(l - 0.25) c h);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
-.ci-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  text-decoration: none;
-  height: 100px;
-  width: auto;
-}
-
-.ci-logo-img {
-  width: 100%;
-  height: 100%; 
-  object-fit: contain;
-}
-
-.ci-header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.ci-search-form {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.ci-search-input {
-  width: 300px;
-  max-width: 40vw;
-  padding: 0.7rem 1rem;
-  padding-right: 5.5rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 4px;
-  background-color: #e9e9e9;
-  color: #1a1a1a;
-}
-
-.ci-search-input::placeholder {
-  color: #7a7a7a;
-}
-
-.ci-search-btn {
-  position: absolute;
-  right: 0.75rem;
-  border: none;
-  background: none;
-  font-weight: 700;
-  font-size: 1rem;
-  color: #1a1a1a;
-  cursor: pointer;
-}
-
-.ci-credits {
-  background-color: #e9e9e9;
-  padding: 0.7rem 1.25rem;
-  border-radius: 4px;
-  font-weight: 700;
-  font-size: 1rem;
-  white-space: nowrap;
+.commission-page .n-credits {
+  background: linear-gradient(180deg, #ffffff 0%, #ececec 100%);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* ---------- Body Layout ---------- */
+/* Transparent + pointer-events pass-through so the shapegrid stays
+   interactive between panels (same trick as the landing page). */
 .ci-body {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   gap: 1.5rem;
   padding: 1.5rem;
   align-items: start;
+  pointer-events: none;
+}
+
+.ci-left > *,
+.ci-right > * {
+  pointer-events: auto;
 }
 
 /* ---------- Left column ---------- */
@@ -108,8 +86,15 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
-  background-color: var(--showcase-navy);
-  border-radius: 4px;
+  background-color: #262052;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0) 40%
+  );
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 8px 22px rgba(0, 0, 0, 0.18);
   overflow: hidden;
 }
 
@@ -120,7 +105,6 @@
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 3rem;
-  /* background-image: linear-gradient(135deg, #2f2894 0%, #201b6b 100%); */
 }
 
 .ci-carousel-index {
@@ -130,27 +114,41 @@
   letter-spacing: 0.5px;
 }
 
+/* Shiny circular arrows */
 .ci-carousel-arrow {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   width: 40px;
   height: 40px;
-  border: none;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.85);
-  color: #262079;
+  background-color: #f2f2f2;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  color: #333333;
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s ease;
+  transition: scale 0.2s ease-in-out;
 }
 
 .ci-carousel-arrow:hover {
-  background-color: #ffffff;
+  scale: 1.1;
+}
+
+.ci-carousel-arrow:active {
+  transform: translateY(calc(-50% + 1px));
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
 .ci-carousel-prev {
@@ -175,25 +173,35 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  border: none;
-  background-color: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.25);
   cursor: pointer;
   padding: 0;
+  transition: background-color 0.15s ease, scale 0.15s ease;
+}
+
+.ci-dot:hover {
+  scale: 1.25;
 }
 
 .ci-dot.active {
-  background-color: #ffffff;
+  background-color: var(--rainbow-cycle);
+  border-color: rgba(255, 255, 255, 0.9);
 }
 
+/* ---------- Purchase card ---------- */
 .ci-purchase-card {
-  background-color: var(--panel-gray);
-  border-radius: 4px;
+  background: var(--ci-panel-bg);
+  border: 1px solid var(--ci-panel-border);
+  border-radius: 8px;
+  box-shadow: var(--ci-panel-shadow);
   padding: 1.5rem;
 }
 
 .ci-comm-title {
   font-size: 2.25rem;
   font-weight: 800;
+  font-family: Helvetica, sans-serif;
   color: #0a0a0a;
   margin: 0 0 0.5rem;
   line-height: 1.1;
@@ -211,25 +219,73 @@
   flex-wrap: wrap;
 }
 
+/* Shiny indie buttons (same recipe as the landing page .btn) */
 .ci-btn {
-  border: none;
+  --cb-color: var(--gray-bg);
+  --cb-border: oklch(from var(--cb-color) calc(l - 0.3) c h);
+
+  position: relative;
+  isolation: isolate;
+  background-color: var(--cb-color);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  border: 1px solid var(--cb-border);
   border-radius: 4px;
   padding: 0.7rem 1.5rem;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: #ffffff;
+  font-family: Helvetica, sans-serif;
+  color: var(--cb-border);
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: scale 0.3s ease-in-out;
 }
 
-.ci-btn-purchase,
+.ci-btn:hover {
+  scale: 1.08;
+}
+
+.ci-btn:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Primary: rainbow conic glow behind the button (like the landing CTA) */
+.ci-btn-purchase {
+  --cb-color: var(--pink);
+}
+
+.ci-btn-purchase::before {
+  content: "";
+  background: conic-gradient(
+    from var(--rotation),
+    var(--red),
+    var(--orange),
+    var(--yellow),
+    var(--green),
+    var(--blue),
+    var(--indigo),
+    var(--purple),
+    var(--pink)
+  );
+  filter: blur(14px);
+  opacity: 0.7;
+  position: absolute;
+  inset: -8px;
+  z-index: -1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.ci-btn-purchase:hover::before {
+  opacity: 1;
+}
+
 .ci-btn-contact {
-  background-color: var(--purple-btn);
-}
-
-.ci-btn-purchase:hover,
-.ci-btn-contact:hover {
-  background-color: var(--purple-btn-hover);
+  --cb-color: var(--blue);
 }
 
 /* ---------- Right column ---------- */
@@ -247,8 +303,10 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  background-color: var(--panel-gray);
-  border-radius: 4px;
+  background: var(--ci-panel-bg);
+  border: 1px solid var(--ci-panel-border);
+  border-radius: 8px;
+  box-shadow: var(--ci-panel-shadow);
   padding: 1rem 1.25rem;
 }
 
@@ -256,9 +314,20 @@
   flex-shrink: 0;
   display: flex;
   text-decoration: none;
-  background-color: var(--panel-gray-2);
-  border-radius: 4px;
+  background: linear-gradient(180deg, #ffffff 0%, #ececec 100%);
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 0, 0, 0.08);
   padding: 0.5rem;
+  transition: scale 0.25s ease-in-out, border-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+
+.ci-artist-avatar-link:hover {
+  scale: 1.08;
+  border-color: var(--rainbow-cycle);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 14px oklch(from var(--rainbow-cycle) l c h / 0.9);
 }
 
 .ci-avatar {
@@ -266,77 +335,171 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background-color: #cfd2da;
-  color: #6b6b6b;
+  background: linear-gradient(180deg, var(--blue) 0%, var(--indigo) 100%);
+  border: 1px solid oklch(from var(--indigo) calc(l - 0.25) c h);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  color: oklch(from var(--indigo) calc(l - 0.35) c h);
   padding: 0.35rem;
 }
 
 .ci-artist-meta {
-  display: flex;
-  flex-direction: row;
-    align-items: center;
-  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'name review'
+    'rep review';
+  align-items: center;
+  column-gap: 1rem;
+  row-gap: 0.35rem;
 }
 
 .ci-artist-name {
+  grid-area: name;
   font-size: 1.6rem;
   font-weight: 800;
+  font-family: Helvetica, sans-serif;
   color: #0a0a0a;
+  line-height: 1.1;
 }
 
 .ci-artist-reputation {
-    display: flex;
-    flex-direction: row;
-    gap: 0.5rem;
+  grid-area: rep;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
 .ci-artist-rep {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: #4a4a4a;
-  flex-grow: 1;
+}
+
+/* Inset "shaded" track with a colored fill (red -> green by reputation) */
+.ci-rep-bar {
+  width: 100%;
+  max-width: 220px;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #dcdcdc 0%, #f0f0f0 100%);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.ci-rep-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.25) 100%
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: width 0.4s ease-in-out;
 }
 
 .ci-artist-review {
-    --fp-dark: oklch(from var(--filter-purple) calc(l - 0.05) c h);
-
-    font-size: 0.95rem;
-    color: var(--fp-dark);
-    border: 1px solid var(--fp-dark);
-    background-color: var(--fp);
-    padding: 1rem;
-    border-radius: 15px;
+  grid-area: review;
+  align-self: center;
+  justify-self: end;
+  max-width: 320px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: oklch(from var(--purple) calc(l - 0.35) c h);
+  border: 1px solid oklch(from var(--purple) calc(l - 0.2) c h);
+  background-color: var(--purple);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
 }
 
 /* Generic panel */
 .ci-panel {
-  background-color: var(--panel-gray);
-  border-radius: 4px;
+  background: var(--ci-panel-bg);
+  border: 1px solid var(--ci-panel-border);
+  border-radius: 8px;
+  box-shadow: var(--ci-panel-shadow);
   padding: 1.25rem 1.5rem;
 }
 
 .ci-panel-title {
+  display: inline-block;
   font-size: 1.4rem;
   font-weight: 800;
+  font-family: Helvetica, sans-serif;
   color: #0a0a0a;
   margin: 0 0 0.75rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 3px solid transparent;
+  border-image: linear-gradient(
+      90deg,
+      var(--red),
+      var(--orange),
+      var(--yellow),
+      var(--green),
+      var(--blue),
+      var(--indigo),
+      var(--purple),
+      var(--pink)
+    )
+    1;
 }
 
-.ci-field {
+/* Each description field gets its own inset sub-section */
+.ci-desc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.ci-desc-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f1f1 100%);
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: 0.75rem 0.9rem;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.ci-desc-item:hover {
+  border-color: var(--rainbow-cycle);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 10px oklch(from var(--rainbow-cycle) l c h / 0.6);
+}
+
+.ci-desc-item-wide {
+  grid-column: 1 / -1;
+}
+
+.ci-desc-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-family: Helvetica, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #5a5a5a;
+}
+
+.ci-desc-value {
   font-size: 1rem;
   line-height: 1.5;
   color: #1a1a1a;
-  margin: 0.15rem 0;
 }
 
-.ci-field strong {
-  font-weight: 700;
-}
-
-.ci-field-group {
-  margin-top: 1rem;
-}
-
-/* Reviews */
+/* ---------- Reviews ---------- */
 .ci-reviews {
   display: flex;
   flex-direction: column;
@@ -361,14 +524,24 @@
   flex-wrap: wrap;
 }
 
+/* Inset "shaded" fields, classic indie form controls */
 .ci-review-search,
 .ci-review-select {
   padding: 0.5rem 0.7rem;
   font-size: 0.9rem;
-  border: 1px solid #c4c7cf;
-  border-radius: 4px;
+  border: 1px solid #b5b5b5;
+  border-radius: 6px;
   background-color: #ffffff;
   color: #1a1a1a;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.ci-review-search:focus,
+.ci-review-select:focus {
+  outline: none;
+  border-color: var(--rainbow-cycle);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08),
+    0 0 8px oklch(from var(--rainbow-cycle) l c h / 0.9);
 }
 
 .ci-review-search {
@@ -383,6 +556,16 @@
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+}
+
+.ci-review {
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.ci-review:hover {
+  border-color: var(--rainbow-cycle);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 12px oklch(from var(--rainbow-cycle) l c h / 0.7);
 }
 
 .ci-review-header {
@@ -402,8 +585,10 @@
 .ci-review-reputation {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #4a2f70;
-  background-color: #d9c9f0;
+  color: oklch(from var(--purple) calc(l - 0.35) c h);
+  background-color: var(--purple);
+  border: 1px solid oklch(from var(--purple) calc(l - 0.2) c h);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
 }
@@ -412,10 +597,17 @@
   margin-left: auto;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #2a2a2a;
-  background-color: var(--panel-gray-2);
+  color: oklch(from var(--yellow) calc(l - 0.4) c h);
+  background-color: var(--yellow);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.15) 100%
+  );
+  border: 1px solid oklch(from var(--yellow) calc(l - 0.25) c h);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   padding: 0.3rem 0.75rem;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .ci-review-text {
@@ -449,9 +641,6 @@
 }
 
 @media (max-width: 600px) {
-  .ci-header {
-    flex-wrap: wrap;
-  }
   .ci-reviews-toolbar {
     flex-direction: column;
     align-items: stretch;

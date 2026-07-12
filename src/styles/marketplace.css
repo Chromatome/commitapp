@@ -1,103 +1,73 @@
-/* Marketplace Page Styles */
+/* Marketplace Page Styles — modern indie web look.
+   Shiny beveled buttons, shaded panels, and the interactive shapegrid
+   background showing through between elements (matches landing/login). */
 
 .marketplace-page {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
-  background-color: #f2f2f2;
   color: #1a1a1a;
 }
 
+/* ---------- Shared shaded-panel recipe ---------- */
+.marketplace-page {
+  --mp-panel-border: rgba(0, 0, 0, 0.16);
+  --mp-panel-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(240, 240, 240, 0.88) 100%
+  );
+  --mp-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 6px 18px rgba(0, 0, 0, 0.08);
+}
 
-
-/* ---------- Header ---------- */
-.mp-header {
+/* ---------- Navbar (scoped so it doesn't clash with landing) ---------- */
+.marketplace-page .navbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background-color: var(--periwinkle);
-  padding: 0rem 1.5rem;
+  padding: 0 1.5rem;
+  background-color: var(--purple);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  border-bottom: 1px solid oklch(from var(--purple) calc(l - 0.25) c h);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
-.mp-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  height: 100px;
-  width: auto;
-}
-
-.mp-logo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-
-.mp-header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.mp-search-form {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.mp-search-input {
-  width: 340px;
-  max-width: 45vw;
-  padding: 0.7rem 1rem;
-  padding-right: 5.5rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 4px;
-  background-color: #e9e9e9;
-  color: #1a1a1a;
-}
-
-.mp-search-input::placeholder {
-  color: #7a7a7a;
-}
-
-.mp-search-btn {
-  position: absolute;
-  right: 0.75rem;
-  border: none;
-  background: none;
-  font-weight: 700;
-  font-size: 1rem;
-  color: #1a1a1a;
-  cursor: pointer;
-
-
-}
-
-.mp-credits {
-  background-color: #e9e9e9;
-  padding: 0.7rem 1.25rem;
-  border-radius: 4px;
-  font-weight: 700;
-  font-size: 1rem;
-  white-space: nowrap;
+.marketplace-page .n-credits {
+  background: linear-gradient(180deg, #ffffff 0%, #ececec 100%);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* ---------- Body Layout ---------- */
+/* Transparent + pointer-events pass-through so the shapegrid stays
+   interactive between panels (same trick as the landing page). */
 .mp-body {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 1.25rem;
-  background-color: var(--lavender-bg);
+  background: transparent;
   margin: 1.25rem 1.5rem 1.5rem;
-  padding: 1.25rem;
-  border-radius: 6px;
+  padding: 0;
+  border-radius: 0;
+  pointer-events: none;
+}
+
+.mp-sidebar > *,
+.mp-main > * {
+  pointer-events: auto;
 }
 
 /* ---------- Sidebar ---------- */
@@ -109,31 +79,45 @@
 }
 
 .mp-profile {
-  background-color: var(--card-gray);
-  border-radius: 4px;
+  background: var(--mp-panel-bg);
+  border: 1px solid var(--mp-panel-border);
+  border-radius: 8px;
+  box-shadow: var(--mp-panel-shadow);
   padding: 1.25rem;
-  border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   aspect-ratio: 1 / 1;
+  transition: scale 0.3s ease-in-out, border-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+
+.mp-profile:hover {
+  scale: 1.05;
+  border-color: var(--rainbow-cycle);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 16px oklch(from var(--rainbow-cycle) l c h / 0.8);
 }
 
 .mp-profile-avatar {
   width: 90px;
   height: 90px;
   border-radius: 50%;
-  background-color: #d0d0d0;
-  color: #6b6b6b;
+  background: linear-gradient(180deg, var(--blue) 0%, var(--indigo) 100%);
+  border: 1px solid oklch(from var(--indigo) calc(l - 0.25) c h);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  color: oklch(from var(--indigo) calc(l - 0.35) c h);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .mp-filters {
-  background-color: var(--card-gray);
-  border-radius: 4px;
+  background: var(--mp-panel-bg);
+  border: 1px solid var(--mp-panel-border);
+  border-radius: 8px;
+  box-shadow: var(--mp-panel-shadow);
   padding: 0.75rem;
   display: flex;
   flex-direction: column;
@@ -142,30 +126,47 @@
   align-content: flex-start;
 }
 
+/* Shiny indie-web filter buttons */
 .mp-filter-btn {
-  --fp-extra-dark: oklch(from var(--filter-purple) calc(l - 0.2) c h);
-  --fp-dark: oklch(from var(--filter-purple) calc(l - 0.05) c h);
-  --fp-light: oklch(from var(--filter-purple) calc(l + 0.15) c h);
+  --fb-color: var(--purple);
+  --fb-border: oklch(from var(--fb-color) calc(l - 0.3) c h);
 
-
-  background: linear-gradient(to bottom, var(--fp-light), var(--fp-dark));
-  color: #ffffff;
-  border: 1px solid var(--fp-extra-dark);
-  border-radius: 4px;
+  background-color: var(--fb-color);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  color: var(--fb-border);
+  border: 1px solid var(--fb-border);
+  border-radius: 6px;
   padding: 0.6rem 0.75rem;
   font-size: 0.9rem;
   font-weight: 600;
+  font-family: Helvetica, sans-serif;
   text-align: left;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: scale 0.2s ease-in-out, filter 0.2s ease-in-out;
 }
 
 .mp-filter-btn:hover {
-  background: var(--filter-purple-active);
+  scale: 1.04;
+  filter: brightness(1.03);
 }
 
+/* Pressed-in look when active */
 .mp-filter-btn.active {
-  background-color: var(--filter-purple-active);
-  box-shadow: inset 0 0 0 2px #ffffff;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.08) 0%,
+    rgba(255, 255, 255, 0.15) 100%
+  );
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+  transform: translateY(1px);
+  scale: 1;
 }
 
 .mp-clear-btn {
@@ -179,6 +180,10 @@
   padding: 0.5rem 0;
 }
 
+.mp-clear-btn:hover {
+  color: #1a1a1a;
+}
+
 /* ---------- Main Browse Area ---------- */
 .mp-main {
   flex: 1 1 auto;
@@ -188,17 +193,109 @@
   min-width: 0;
 }
 
+/* ---------- Search ---------- */
+.mp-search {
+  background: var(--mp-panel-bg);
+  border: 1px solid var(--mp-panel-border);
+  border-radius: 8px;
+  box-shadow: var(--mp-panel-shadow);
+  padding: 0.85rem 1rem;
+}
+
+.mp-search-form {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.mp-search-form input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.65rem 1rem;
+  font-size: 1rem;
+  color: #1a1a1a;
+  background-color: #ffffff;
+  border: 1px solid #b5b5b5;
+  border-radius: 6px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.mp-search-form input::placeholder {
+  color: #8a8a8a;
+}
+
+.mp-search-form input:focus {
+  outline: none;
+  border-color: var(--rainbow-cycle);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08),
+    0 0 8px oklch(from var(--rainbow-cycle) l c h / 0.9);
+}
+
+.mp-search-form button {
+  --sb-color: var(--pink);
+  --sb-border: oklch(from var(--sb-color) calc(l - 0.3) c h);
+
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.9rem;
+  background-color: var(--sb-color);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  border: 1px solid var(--sb-border);
+  border-radius: 6px;
+  color: var(--sb-border);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: scale 0.2s ease-in-out;
+}
+
+.mp-search-form button:hover {
+  scale: 1.08;
+}
+
+.mp-search-form button:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ---------- Sections ---------- */
 .mp-section {
-  background-color: var(--card-gray);
-  border-radius: 4px;
+  background: var(--mp-panel-bg);
+  border: 1px solid var(--mp-panel-border);
+  border-radius: 8px;
+  box-shadow: var(--mp-panel-shadow);
   padding: 1.25rem 1.5rem 1.5rem;
 }
 
 .mp-section-title {
+  display: inline-block;
   font-size: 1.9rem;
   font-weight: 800;
+  font-family: Helvetica, sans-serif;
   margin-bottom: 1rem;
   color: #0a0a0a;
+  padding-bottom: 0.25rem;
+  border-bottom: 3px solid transparent;
+  border-image: linear-gradient(
+      90deg,
+      var(--red),
+      var(--orange),
+      var(--yellow),
+      var(--green),
+      var(--blue),
+      var(--indigo),
+      var(--purple),
+      var(--pink)
+    )
+    1;
 }
 
 .mp-grid {
@@ -207,28 +304,61 @@
   gap: 1rem;
 }
 
+/* ---------- Cards ---------- */
 .mp-card {
-  background: none;
-  border: none;
-  padding: 0;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f4f4 100%);
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 6px rgba(0, 0, 0, 0.06);
+  padding: 0.5rem;
   cursor: pointer;
   text-align: left;
+  text-decoration: none;
+  color: inherit;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  transition: scale 0.25s ease-in-out, border-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+
+/* Animated rainbow border on hover (driven by :root --rainbow-cycle) */
+.mp-card:hover {
+  scale: 1.04;
+  border-color: var(--rainbow-cycle);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 14px oklch(from var(--rainbow-cycle) l c h / 0.9);
 }
 
 .mp-thumb {
   width: 100%;
   aspect-ratio: 4 / 3;
-  background-color: var(--thumb-purple);
-  border-radius: 2px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background-color: var(--purple);
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0) 55%
+  );
+  box-shadow: inset 0 -14px 24px rgba(0, 0, 0, 0.06);
 }
+
+/* Cycle the pastel palette across thumbnails for an indie collage feel */
+.mp-grid .mp-card:nth-child(8n + 1) .mp-thumb { background-color: var(--red); }
+.mp-grid .mp-card:nth-child(8n + 2) .mp-thumb { background-color: var(--orange); }
+.mp-grid .mp-card:nth-child(8n + 3) .mp-thumb { background-color: var(--yellow); }
+.mp-grid .mp-card:nth-child(8n + 4) .mp-thumb { background-color: var(--green); }
+.mp-grid .mp-card:nth-child(8n + 5) .mp-thumb { background-color: var(--blue); }
+.mp-grid .mp-card:nth-child(8n + 6) .mp-thumb { background-color: var(--indigo); }
+.mp-grid .mp-card:nth-child(8n + 7) .mp-thumb { background-color: var(--purple); }
+.mp-grid .mp-card:nth-child(8n + 8) .mp-thumb { background-color: var(--pink); }
 
 .mp-card-meta {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  padding: 0 0.15rem 0.15rem;
 }
 
 .mp-card-title {
@@ -259,9 +389,12 @@
 }
 
 .mp-tag {
+  --tag-color: var(--pink);
   font-size: 0.65rem;
-  background-color: #c9b6ec;
-  color: #4a2f70;
+  background-color: var(--tag-color);
+  color: oklch(from var(--tag-color) calc(l - 0.35) c h);
+  border: 1px solid oklch(from var(--tag-color) calc(l - 0.2) c h);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
   white-space: nowrap;
@@ -274,6 +407,10 @@
   gap: 0.75rem;
   margin-bottom: 1rem;
   flex-wrap: wrap;
+}
+
+.mp-results-header .mp-section-title {
+  margin-bottom: 0;
 }
 
 .mp-results-count {
@@ -292,9 +429,6 @@
   .mp-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  .mp-search-input {
-    width: 200px;
-  }
 }
 
 @media (max-width: 640px) {
@@ -310,8 +444,5 @@
   }
   .mp-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-  .mp-header {
-    flex-wrap: wrap;
   }
 }

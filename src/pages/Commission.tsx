@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import '../styles/styles.css';
 import '../styles/commissioninfo.css';
 import Navbar from '../components/Navbar';
+import Background from '../components/Background';
 
 type Review = {
   id: number;
@@ -115,6 +116,12 @@ const CommissionInfo: React.FC = () => {
 
   return (
     <div className="commission-page">
+      <Background
+        direction="diagonal"
+        speed={0.3}
+        borderColor="rgba(0, 0, 0, 0.05)"
+      />
+
       {/* Header (matches marketplace) */}
       <Navbar />
       
@@ -185,47 +192,68 @@ const CommissionInfo: React.FC = () => {
               <Avatar size={48} />
             </a>
             <div className="ci-artist-meta">
-                <span className="ci-artist-name">{COMMISSION.artist.name}</span>
-                <span className="ci-artist-reputation">
-                    <span className="ci-artist-rep">{COMMISSION.artist.reputation}/100 Reputation</span>
-                    <span className="ci-artist-review">{COMMISSION.artist.review}</span>
+              <span className="ci-artist-name">{COMMISSION.artist.name}</span>
+              <div className="ci-artist-reputation">
+                <span className="ci-artist-rep">
+                  {COMMISSION.artist.reputation}/100 Reputation
                 </span>
+                <div
+                  className="ci-rep-bar"
+                  role="progressbar"
+                  aria-valuenow={COMMISSION.artist.reputation}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label="Artist reputation"
+                >
+                  <div
+                    className="ci-rep-bar-fill"
+                    style={{
+                      width: `${COMMISSION.artist.reputation}%`,
+                      backgroundColor: `hsl(${COMMISSION.artist.reputation * 1.2}, 75%, 45%)`,
+                    }}
+                  />
+                </div>
+              </div>
+              <span className="ci-artist-review">{COMMISSION.artist.review}</span>
             </div>
           </div>
 
           {/* Description */}
           <section className="ci-panel ci-description">
             <h2 className="ci-panel-title">Description</h2>
-            <p className="ci-field">
-              <strong>Payment Type</strong> - {COMMISSION.description.paymentType}
-            </p>
-            <p className="ci-field">
-              <strong>Time</strong> - {COMMISSION.description.time}
-            </p>
-            <p className="ci-field">
-              <strong>Phases</strong> - {COMMISSION.description.phases}
-            </p>
-
-            <div className="ci-field-group">
-              <p className="ci-field">
-                <strong>Sold:</strong> {COMMISSION.description.sold}
-              </p>
-              <p className="ci-field">
-                <strong>Avg. Satisfaction:</strong> {COMMISSION.description.avgSatisfaction}
-              </p>
-              <p className="ci-field">
-                <strong>Total USD Price After Fee:</strong> {COMMISSION.description.totalUsdAfterFee}
-              </p>
-              <p className="ci-field">
-                <strong>Price Per Phase:</strong> {COMMISSION.description.pricePerPhase}
-              </p>
-            </div>
-
-            <div className="ci-field-group">
-              <p className="ci-field">
-                <strong>Artist Terms:</strong>
-              </p>
-              <p className="ci-field">{COMMISSION.description.artistTerms}</p>
+            <div className="ci-desc-grid">
+              <div className="ci-desc-item">
+                <span className="ci-desc-label">Payment Type</span>
+                <span className="ci-desc-value">{COMMISSION.description.paymentType}</span>
+              </div>
+              <div className="ci-desc-item">
+                <span className="ci-desc-label">Time</span>
+                <span className="ci-desc-value">{COMMISSION.description.time}</span>
+              </div>
+              <div className="ci-desc-item ci-desc-item-wide">
+                <span className="ci-desc-label">Phases</span>
+                <span className="ci-desc-value">{COMMISSION.description.phases}</span>
+              </div>
+              <div className="ci-desc-item">
+                <span className="ci-desc-label">Sold</span>
+                <span className="ci-desc-value">{COMMISSION.description.sold}</span>
+              </div>
+              <div className="ci-desc-item">
+                <span className="ci-desc-label">Avg. Satisfaction</span>
+                <span className="ci-desc-value">{COMMISSION.description.avgSatisfaction}</span>
+              </div>
+              <div className="ci-desc-item">
+                <span className="ci-desc-label">Total USD Price After Fee</span>
+                <span className="ci-desc-value">{COMMISSION.description.totalUsdAfterFee}</span>
+              </div>
+              <div className="ci-desc-item">
+                <span className="ci-desc-label">Price Per Phase</span>
+                <span className="ci-desc-value">{COMMISSION.description.pricePerPhase}</span>
+              </div>
+              <div className="ci-desc-item ci-desc-item-wide">
+                <span className="ci-desc-label">Artist Terms</span>
+                <span className="ci-desc-value">{COMMISSION.description.artistTerms}</span>
+              </div>
             </div>
           </section>
 
