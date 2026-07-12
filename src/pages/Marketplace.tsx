@@ -37,6 +37,9 @@ const ARTIST_REPUTATION: Record<string, number> = {
 
 const getReputation = (artist: string) => ARTIST_REPUTATION[artist] ?? 50;
 
+// Map reputation (0-100) to an oklch hue: 25 (red) -> 145 (green).
+const getReputationHue = (rep: number) => 25 + (Math.min(Math.max(rep, 0), 100) / 100) * 120;
+
 // Placeholder commissions grouped by browse section.
 const PROMOTED: Commission[] = [
   { id: 1, title: 'Neon Portrait', artist: 'Aria Vale', price: 85, tags: ['Digital Art', 'Illustration'] },
@@ -91,6 +94,11 @@ const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) =>
         {commission.artist}
         <span
           className="mp-card-rep"
+          style={
+            {
+              '--rep-hue': getReputationHue(getReputation(commission.artist)),
+            } as React.CSSProperties
+          }
           title={`Artist reputation: ${getReputation(commission.artist)}/100`}
         >
           <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

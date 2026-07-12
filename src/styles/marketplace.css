@@ -534,17 +534,19 @@
   min-width: 0;
 }
 
-/* Artist reputation badge */
+/* Artist reputation badge.
+   --rep-hue is set per-card in JS: 25 (red, low rep) -> 145 (green, high rep). */
 .mp-card-rep {
+  --rep-hue: 85;
   display: inline-flex;
   align-items: center;
   gap: 0.15rem;
   flex-shrink: 0;
   font-size: 0.65rem;
   font-weight: 700;
-  color: oklch(from var(--yellow) calc(l - 0.4) c h);
-  background-color: var(--yellow);
-  border: 1px solid oklch(from var(--yellow) calc(l - 0.2) c h);
+  color: oklch(0.42 0.13 var(--rep-hue));
+  background-color: oklch(0.87 0.12 var(--rep-hue));
+  border: 1px solid oklch(0.68 0.14 var(--rep-hue));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   padding: 0.05rem 0.35rem;
   border-radius: 999px;
