@@ -169,6 +169,97 @@
   scale: 1;
 }
 
+/* Screen-reader-only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Sidebar filter group labels */
+.mp-filter-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: Helvetica, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #5a5a5a;
+  margin-top: 0.35rem;
+}
+
+.mp-filter-label:first-child {
+  margin-top: 0;
+}
+
+.mp-filter-value {
+  font-size: 0.8rem;
+  color: #1a1a1a;
+}
+
+/* Price range inputs */
+.mp-price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mp-price-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.mp-price-prefix {
+  position: absolute;
+  left: 0.45rem;
+  font-size: 0.8rem;
+  color: #8a8a8a;
+  pointer-events: none;
+}
+
+.mp-price-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.4rem 0.3rem 0.4rem 1.1rem;
+  font-size: 0.85rem;
+  color: #1a1a1a;
+  background-color: #ffffff;
+  border: 1px solid #b5b5b5;
+  border-radius: 6px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.mp-price-field input:focus {
+  outline: none;
+  border-color: var(--rainbow-cycle);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08),
+    0 0 6px oklch(from var(--rainbow-cycle) l c h / 0.9);
+}
+
+.mp-price-sep {
+  color: #8a8a8a;
+  flex-shrink: 0;
+}
+
+/* Reputation slider */
+.mp-rep-slider {
+  width: 100%;
+  accent-color: var(--purple);
+  cursor: pointer;
+}
+
 .mp-clear-btn {
   margin-top: auto;
   background: none;
@@ -437,6 +528,26 @@
 .mp-card-artist {
   font-size: 0.75rem;
   color: #6a6a6a;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+/* Artist reputation badge */
+.mp-card-rep {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: oklch(from var(--yellow) calc(l - 0.4) c h);
+  background-color: var(--yellow);
+  border: 1px solid oklch(from var(--yellow) calc(l - 0.2) c h);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
 }
 
 .mp-card-price {

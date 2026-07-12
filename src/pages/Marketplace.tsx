@@ -15,32 +15,58 @@ type Commission = {
 // Filter categories shown in the sidebar.
 const FILTERS = ['Digital Art', 'Painting', 'Illustration', 'Sketch', '3D Art'];
 
+// Per-artist reputation scores (0-100). Generally trends above 50,
+// with newer artists sitting closer to the middle.
+const ARTIST_REPUTATION: Record<string, number> = {
+  'Aria Vale': 92,
+  'Milo Chen': 78,
+  'Rin Okada': 88,
+  'Kofi Mensah': 95,
+  'Lena Ford': 71,
+  'Sora Kim': 84,
+  'Nia Blake': 66,
+  'Dev Rao': 90,
+  'Yuki Sato': 81,
+  'Tom Reed': 74,
+  'Max Wu': 58,
+  'Ivy Long': 63,
+  'Sam Diaz': 47,
+  'Ben Cole': 55,
+  'Ana Ruiz': 69,
+};
+
+const getReputation = (artist: string) => ARTIST_REPUTATION[artist] ?? 50;
+
 // Placeholder commissions grouped by browse section.
 const PROMOTED: Commission[] = [
-  { id: 1, title: 'Neon Portrait', artist: 'Aria Vale', price: 45, tags: ['Digital Art', 'Illustration'] },
-  { id: 2, title: 'Sunset Study', artist: 'Milo Chen', price: 45, tags: ['Painting'] },
-  { id: 3, title: 'Cyber Cat', artist: 'Rin Okada', price: 45, tags: ['Digital Art', '3D Art'] },
-  { id: 4, title: 'Ink Dragon', artist: 'Kofi Mensah', price: 45, tags: ['Sketch', 'Illustration'] },
-  { id: 5, title: 'Dream Field', artist: 'Lena Ford', price: 45, tags: ['Painting', 'Digital Art'] },
+  { id: 1, title: 'Neon Portrait', artist: 'Aria Vale', price: 85, tags: ['Digital Art', 'Illustration'] },
+  { id: 2, title: 'Sunset Study', artist: 'Milo Chen', price: 40, tags: ['Painting'] },
+  { id: 3, title: 'Cyber Cat', artist: 'Rin Okada', price: 120, tags: ['Digital Art', '3D Art'] },
+  { id: 4, title: 'Ink Dragon', artist: 'Kofi Mensah', price: 150, tags: ['Sketch', 'Illustration'] },
+  { id: 5, title: 'Dream Field', artist: 'Lena Ford', price: 60, tags: ['Painting', 'Digital Art'] },
 ];
 
 const RECOMMENDED: Commission[] = [
-  { id: 6, title: 'Chibi Duo', artist: 'Sora Kim', price: 45, tags: ['Illustration', 'Digital Art'] },
-  { id: 7, title: 'Forest Spirit', artist: 'Nia Blake', price: 45, tags: ['Painting'] },
-  { id: 8, title: 'Mecha Sketch', artist: 'Dev Rao', price: 45, tags: ['Sketch', '3D Art'] },
-  { id: 9, title: 'Pastel Girl', artist: 'Yuki Sato', price: 45, tags: ['Digital Art'] },
-  { id: 10, title: 'Old Harbor', artist: 'Tom Reed', price: 45, tags: ['Painting', 'Illustration'] },
+  { id: 6, title: 'Chibi Duo', artist: 'Sora Kim', price: 35, tags: ['Illustration', 'Digital Art'] },
+  { id: 7, title: 'Forest Spirit', artist: 'Nia Blake', price: 55, tags: ['Painting'] },
+  { id: 8, title: 'Mecha Sketch', artist: 'Dev Rao', price: 25, tags: ['Sketch', '3D Art'] },
+  { id: 9, title: 'Pastel Girl', artist: 'Yuki Sato', price: 48, tags: ['Digital Art'] },
+  { id: 10, title: 'Old Harbor', artist: 'Tom Reed', price: 70, tags: ['Painting', 'Illustration'] },
 ];
 
 const NEW_ARTISTS: Commission[] = [
   { id: 11, title: 'Doodle Pack', artist: 'Max Wu', price: 3, tags: ['Sketch'] },
-  { id: 12, title: 'Fantasy Icon', artist: 'Ivy Long', price: 10, tags: ['Digital Art', 'Illustration'] },
-  { id: 13, title: 'Quick Bust', artist: 'Sam Diaz', price: 4, tags: ['Sketch', 'Painting'] },
-  { id: 14, title: 'Voxel Hero', artist: 'Ben Cole', price: 6, tags: ['3D Art'] },
-  { id: 15, title: 'Watercolor Pet', artist: 'Ana Ruiz', price: 10, tags: ['Painting'] },
+  { id: 12, title: 'Fantasy Icon', artist: 'Ivy Long', price: 12, tags: ['Digital Art', 'Illustration'] },
+  { id: 13, title: 'Quick Bust', artist: 'Sam Diaz', price: 5, tags: ['Sketch', 'Painting'] },
+  { id: 14, title: 'Voxel Hero', artist: 'Ben Cole', price: 8, tags: ['3D Art'] },
+  { id: 15, title: 'Watercolor Pet', artist: 'Ana Ruiz', price: 18, tags: ['Painting'] },
 ];
 
 const ALL_COMMISSIONS = [...PROMOTED, ...RECOMMENDED, ...NEW_ARTISTS];
+
+// Price filter bounds derived from the catalog.
+const PRICE_MIN = 0;
+const PRICE_MAX = Math.max(...ALL_COMMISSIONS.map((c) => c.price));
 
 // Varied aspect ratios (width / height) to showcase different thumbnail
 // resolutions. Deterministic per commission id so cards keep their shape.
@@ -61,7 +87,18 @@ const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) =>
     <div className="mp-thumb" aria-hidden="true" />
     <div className="mp-card-meta">
       <span className="mp-card-title">{commission.title}</span>
-      <span className="mp-card-artist">{commission.artist}</span>
+      <span className="mp-card-artist">
+        {commission.artist}
+        <span
+          className="mp-card-rep"
+          title={`Artist reputation: ${getReputation(commission.artist)}/100`}
+        >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2l2.9 6.26L21.5 9.3l-4.75 4.4 1.15 6.8L12 17.2l-5.9 3.3 1.15-6.8L2.5 9.3l6.6-1.04L12 2z" />
+          </svg>
+          {getReputation(commission.artist)}
+        </span>
+      </span>
       <span className="mp-card-price">${commission.price}</span>
       <span className="mp-card-tags">
         {commission.tags.map((tag) => (
@@ -89,6 +126,9 @@ const MarketPlace: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState('');
   const [query, setQuery] = useState('');
+  const [priceMin, setPriceMin] = useState(PRICE_MIN);
+  const [priceMax, setPriceMax] = useState(PRICE_MAX);
+  const [minReputation, setMinReputation] = useState(0);
 
   const toggleFilter = (filter: string) => {
     setActiveFilters((prev) =>
@@ -100,6 +140,9 @@ const MarketPlace: React.FC = () => {
     setActiveFilters([]);
     setSearchInput('');
     setQuery('');
+    setPriceMin(PRICE_MIN);
+    setPriceMax(PRICE_MAX);
+    setMinReputation(0);
   };
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -107,7 +150,9 @@ const MarketPlace: React.FC = () => {
     setQuery(searchInput.trim());
   };
 
-  const isFiltering = activeFilters.length > 0 || query.length > 0;
+  const isPriceFiltered = priceMin > PRICE_MIN || priceMax < PRICE_MAX;
+  const isFiltering =
+    activeFilters.length > 0 || query.length > 0 || isPriceFiltered || minReputation > 0;
 
   // Relevant commissions matching the applied filters and/or artist/title search.
   const results = useMemo(() => {
@@ -119,9 +164,11 @@ const MarketPlace: React.FC = () => {
         q.length === 0 ||
         c.artist.toLowerCase().includes(q) ||
         c.title.toLowerCase().includes(q);
-      return matchesFilters && matchesQuery;
+      const matchesPrice = c.price >= priceMin && c.price <= priceMax;
+      const matchesReputation = getReputation(c.artist) >= minReputation;
+      return matchesFilters && matchesQuery && matchesPrice && matchesReputation;
     });
-  }, [activeFilters, query]);
+  }, [activeFilters, query, priceMin, priceMax, minReputation]);
 
   return (
     <div className="marketplace-page">
@@ -148,6 +195,7 @@ const MarketPlace: React.FC = () => {
 
           {/* Search filters */}
           <div className="mp-filters">
+            <span className="mp-filter-label">Categories</span>
             {FILTERS.map((filter) => (
               <button
                 key={filter}
@@ -159,6 +207,59 @@ const MarketPlace: React.FC = () => {
                 {filter}
               </button>
             ))}
+
+            {/* Price range */}
+            <span className="mp-filter-label">Price range</span>
+            <div className="mp-price-inputs">
+              <label className="mp-price-field">
+                <span className="sr-only">Minimum price</span>
+                <span className="mp-price-prefix">$</span>
+                <input
+                  type="number"
+                  min={PRICE_MIN}
+                  max={priceMax}
+                  value={priceMin}
+                  onChange={(e) =>
+                    setPriceMin(Math.max(PRICE_MIN, Math.min(Number(e.target.value) || 0, priceMax)))
+                  }
+                  aria-label="Minimum price"
+                />
+              </label>
+              <span className="mp-price-sep" aria-hidden="true">
+                –
+              </span>
+              <label className="mp-price-field">
+                <span className="sr-only">Maximum price</span>
+                <span className="mp-price-prefix">$</span>
+                <input
+                  type="number"
+                  min={priceMin}
+                  max={PRICE_MAX}
+                  value={priceMax}
+                  onChange={(e) =>
+                    setPriceMax(Math.min(PRICE_MAX, Math.max(Number(e.target.value) || 0, priceMin)))
+                  }
+                  aria-label="Maximum price"
+                />
+              </label>
+            </div>
+
+            {/* Reputation */}
+            <span className="mp-filter-label">
+              Reputation
+              <span className="mp-filter-value">{minReputation}+</span>
+            </span>
+            <input
+              className="mp-rep-slider"
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={minReputation}
+              onChange={(e) => setMinReputation(Number(e.target.value))}
+              aria-label={`Minimum artist reputation: ${minReputation}`}
+            />
+
             {isFiltering && (
               <button className="mp-clear-btn" type="button" onClick={clearAll}>
                 Clear filters
