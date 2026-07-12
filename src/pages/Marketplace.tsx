@@ -42,9 +42,22 @@ const NEW_ARTISTS: Commission[] = [
 
 const ALL_COMMISSIONS = [...PROMOTED, ...RECOMMENDED, ...NEW_ARTISTS];
 
+// Varied aspect ratios (width / height) to showcase different thumbnail
+// resolutions. Deterministic per commission id so cards keep their shape.
+const THUMB_RATIOS = [1, 4 / 3, 3 / 4, 16 / 9, 2 / 3, 3 / 2];
+const THUMB_HEIGHT = 170;
+
+const getThumbWidth = (id: number) =>
+  Math.round(THUMB_HEIGHT * THUMB_RATIOS[id % THUMB_RATIOS.length]);
+
 const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) => (
-  <a className="mp-card" type="button" href={`/commission?id=${commission.id}`} aria-label={`View details for ${commission.title} by ${commission.artist}`}>
-    {/* Thumbnail placeholder */}
+  <a
+    className="mp-card"
+    href={`/commission?id=${commission.id}`}
+    style={{ '--thumb-width': `${getThumbWidth(commission.id)}px` } as React.CSSProperties}
+    aria-label={`View details for ${commission.title} by ${commission.artist}`}
+  >
+    {/* Thumbnail placeholder — dimensions vary to simulate different resolutions */}
     <div className="mp-thumb" aria-hidden="true" />
     <div className="mp-card-meta">
       <span className="mp-card-title">{commission.title}</span>
@@ -64,7 +77,7 @@ const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) =>
 const Section: React.FC<{ title: string; commissions: Commission[] }> = ({ title, commissions }) => (
   <section className="mp-section">
     <h2 className="mp-section-title">{title}</h2>
-    <div className="mp-grid">
+    <div className="mp-row" role="list" aria-label={`${title} commissions`}>
       {commissions.map((c) => (
         <CommissionCard commission={c} key={c.id} />
       ))}
