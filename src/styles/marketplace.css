@@ -67,10 +67,11 @@
 }
 
 .mp-sidebar {
-  flex: 0 0 160px;
+  flex: 0 0 220px;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+
 }
 
 .mp-profile {

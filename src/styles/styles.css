@@ -75,7 +75,12 @@
     text-decoration: none;
     width: 150px;
     height: auto;
-    margin: 1rem -1rem;
+    margin: 1rem 1rem;
+    transition: scale 0.3s ease-in-out;
+
+    &:hover {
+        scale: 1.1;
+    }
 }
 
 .n-logo-img {
