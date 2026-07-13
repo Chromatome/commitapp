@@ -1,6 +1,8 @@
 import '../styles/landingpage.css';
 import React from 'react';
+import { Navigate } from 'react-router';
 // import logo from "../assets/logo.png";
+import { useSession } from '../hooks/useSession';
 import LinkButton from '../components/LinkButton';
 import example_art from "../assets/example_art.png";
 import "../styles/styles.css";
@@ -10,12 +12,17 @@ import logo2 from "../assets/CommIt.svg";
 
 const LandingPage: React.FC = () => {
   const aboutRef = React.useRef<HTMLDivElement>(null);
+  const { session, checking } = useSession();
 
   const toAboutSection = () => {
     if (aboutRef.current) {
       aboutRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }
+
+  // Logged-in users skip the landing page and go straight to the marketplace.
+  if (checking) return null;
+  if (session) return <Navigate to="/marketplace" replace />;
 
   return (
     <div className="landing-page">
