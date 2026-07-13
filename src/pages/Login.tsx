@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import '../styles/login.css';
 import '../styles/styles.css';
 import Background from '../components/Background';
@@ -35,7 +35,13 @@ const toE164 = (value: string): string | null => {
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const [mode, setMode] = React.useState<Mode>('login');
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  // Where to send the user after auth (set by RequireAuth redirects).
+  const from = (location.state as { from?: string } | null)?.from ?? '/marketplace';
+  const [mode, setMode] = React.useState<Mode>(
+    searchParams.get('mode') === 'signup' ? 'signup' : 'login',
+  );
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -96,7 +102,7 @@ const Login: React.FC = () => {
         setError(result.error);
         return;
       }
-      navigate('/marketplace');
+      navigate(from);
     } catch {
       setError('Something went wrong logging in. Please try again.');
     } finally {
@@ -145,7 +151,7 @@ const Login: React.FC = () => {
           return;
         }
         setNotice('Account created! Check your email for a confirmation link if required, then log in.');
-        setTimeout(() => navigate('/marketplace'), 2000);
+        setTimeout(() => navigate(from), 2000);
       }
     } catch {
       setError('Something went wrong creating your account. Please try again.');
@@ -178,7 +184,7 @@ const Login: React.FC = () => {
       }
 
       setNotice('Phone verified! Check your email for a confirmation link, then you can use it to log in.');
-      setTimeout(() => navigate('/marketplace'), 2500);
+      setTimeout(() => navigate(from), 2500);
     } catch {
       setError('Something went wrong verifying the code. Please try again.');
     } finally {

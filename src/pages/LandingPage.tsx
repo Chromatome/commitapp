@@ -51,7 +51,7 @@ const LandingPage: React.FC = () => {
 
           {/* CTA Button */}
           <div className="cta-buttons">
-            <LinkButton label="Get Started" href="/marketplace" isPrimary color="#ffc6ff"/>
+            <LinkButton label="Get Started" href="/login?mode=signup" isPrimary color="#ffc6ff"/>
             <Button label="Learn More" onClick={toAboutSection} color="var(--gray-bg) " />
           </div>
         </section>
