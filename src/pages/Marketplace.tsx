@@ -3,6 +3,7 @@ import '../styles/styles.css';
 import '../styles/marketplace.css';
 import Navbar from '../components/Navbar';
 import Background from '../components/Background';
+import { useSession } from '../hooks/useSession';
 
 type Commission = {
   id: number;
@@ -131,6 +132,7 @@ const Section: React.FC<{ title: string; commissions: Commission[] }> = ({ title
 );
 
 const MarketPlace: React.FC = () => {
+  const { session } = useSession();
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState('');
   const [query, setQuery] = useState('');
@@ -192,14 +194,18 @@ const MarketPlace: React.FC = () => {
       <div className="mp-body">
         {/* Sidebar */}
         <aside className="mp-sidebar">
-          {/* Profile — will link to the user's profile once implemented */}
-          <button className="mp-profile" type="button" aria-label="Your profile">
+          {/* Links to the signed-in user's profile */}
+          <a
+            className="mp-profile"
+            href={session ? `/profile?id=${session.user.id}` : '/login'}
+            aria-label="Your profile"
+          >
             <span className="mp-profile-avatar">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6v2h16v-2c0-3.33-2.67-6-8-6z" />
               </svg>
             </span>
-          </button>
+          </a>
 
           {/* Search filters */}
           <div className="mp-filters">

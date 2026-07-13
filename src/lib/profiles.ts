@@ -56,8 +56,8 @@ export interface ProfileOverview {
   about_me: string;
   created_at: string;
   account_age_tier: AccountAgeTier;
-  /** True for accounts < 30 days old. Display a "New Artist" marker so a
-   * starting reputation of 50 is not mistaken for fraud. */
+  /** True until the artist has 5+ commission sales. Display a "New Artist"
+   * marker so a starting reputation of 50 is not mistaken for fraud. */
   is_new_artist: boolean;
   last_seen_at: string;
   activity_status: ActivityStatus;
@@ -66,8 +66,43 @@ export interface ProfileOverview {
   following_count: number;
   average_rating: number;
   review_count: number;
+  commission_count: number;
   /** Admin-granted badges, oldest first. */
   badges: ProfileBadge[];
+}
+
+export type PaymentType = 'upfront' | 'installments' | 'split';
+
+/** An artist-defined stage of development with its own price. */
+export interface CommissionPhase {
+  name: string;
+  description: string;
+  price: number; // credits
+}
+
+export interface Commission {
+  id: string;
+  profile_id: string;
+  title: string;
+  price: number; // total price in credits
+  payment_type: PaymentType;
+  /** For 'split' (%/%): percent paid upfront, remainder on completion. */
+  split_upfront_percent: number | null;
+  time_taken: string;
+  tags: string[];
+  times_sold: number; // system-managed
+  phases: CommissionPhase[];
+  artist_terms: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Everything the /profile page needs, fetched in one request. */
+export interface ProfilePageData {
+  profile: ProfileOverview | null;
+  social_links: SocialLink[];
+  commissions: Commission[];
+  reviews: ReviewWithReviewer[];
 }
 
 export interface SocialLink {
@@ -255,6 +290,78 @@ export async function deleteReview(reviewId: string) {
 }
 
 // ============================================================
+// Profile page (single-request fetch)
+// ============================================================
+
+/**
+ * Fetch everything the profile page needs — profile overview, social links,
+ * commissions, and reviews — in a single GET request via the
+ * `get_profile_page` database function.
+ */
+export async function getProfilePage(profileId: string) {
+  const { data, error } = await supabase.rpc('get_profile_page', { pid: profileId });
+  if (error) throw error;
+  const page = data as ProfilePageData;
+  return {
+    profile: page.profile ?? null,
+    social_links: page.social_links ?? [],
+    commissions: page.commissions ?? [],
+    reviews: page.reviews ?? [],
+  } as ProfilePageData;
+}
+
+// ============================================================
+// Commissions
+// ============================================================
+
+/** All commissions listed by a profile, newest first. */
+export async function getCommissions(profileId: string) {
+  const { data, error } = await supabase
+    .from('commissions')
+    .select('*')
+    .eq('profile_id', profileId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Commission[];
+}
+
+export type CommissionInput = Omit<
+  Commission,
+  'id' | 'profile_id' | 'times_sold' | 'created_at' | 'updated_at'
+>;
+
+/** Create a commission listing on the current user's profile. */
+export async function createCommission(profileId: string, input: CommissionInput) {
+  const { data, error } = await supabase
+    .from('commissions')
+    .insert({ ...input, profile_id: profileId })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Commission;
+}
+
+/**
+ * Update an owned commission. All fields are editable except `times_sold`,
+ * which is system-managed and enforced by RLS.
+ */
+export async function updateCommission(commissionId: string, updates: Partial<CommissionInput>) {
+  const { data, error } = await supabase
+    .from('commissions')
+    .update(updates)
+    .eq('id', commissionId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Commission;
+}
+
+export async function deleteCommission(commissionId: string) {
+  const { error } = await supabase.from('commissions').delete().eq('id', commissionId);
+  if (error) throw error;
+}
+
+// ============================================================
 // Presence (activity status)
 // ============================================================
 
@@ -353,5 +460,11 @@ export const ACTIVITY_STATUS_LABELS: Record<ActivityStatus, string> = {
   offline: 'Offline',
 };
 
-/** Label for the marker shown on profiles less than 30 days old. */
+/** Label for the marker shown until an artist reaches 5+ commission sales. */
 export const NEW_ARTIST_LABEL = 'New Artist';
+
+export const PAYMENT_TYPE_LABELS: Record<PaymentType, string> = {
+  upfront: 'Upfront',
+  installments: 'Installments',
+  split: 'Split %/%',
+};
