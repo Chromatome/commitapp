@@ -1,0 +1,516 @@
+/* Artist Profile Page Styles — modern indie web look.
+   Matches the commission info/marketplace pages: shiny beveled panels,
+   rainbow accents, and the interactive shapegrid background between elements. */
+
+.profile-page {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  color: #1a1a1a;
+}
+
+.profile-page {
+  --pf-panel-border: rgba(0, 0, 0, 0.16);
+  --pf-panel-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(240, 240, 240, 0.88) 100%
+  );
+  --pf-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Navbar (scoped, same recipe as other pages) ---------- */
+.profile-page .navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  background-color: var(--purple);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  border-bottom: 1px solid oklch(from var(--purple) calc(l - 0.25) c h);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.profile-page .n-credits,
+.profile-page .n-menu-btn {
+  background: linear-gradient(180deg, #ffffff 0%, #ececec 100%);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.profile-page .n-menu-btn:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #e2e2e2 100%);
+}
+
+/* ---------- Body Layout ---------- */
+/* Transparent + pointer-events pass-through so the shapegrid stays
+   interactive between panels (same trick as the other pages). */
+.pf-body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 1.5rem;
+  padding: 1.5rem;
+  align-items: start;
+  pointer-events: none;
+}
+
+.pf-left > *,
+.pf-right > * {
+  pointer-events: auto;
+}
+
+.pf-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: sticky;
+  top: 1.5rem;
+}
+
+.pf-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+/* ---------- Generic panel (same recipe as ci-panel) ---------- */
+.pf-panel {
+  background: var(--pf-panel-bg);
+  border: 1px solid var(--pf-panel-border);
+  border-radius: 8px;
+  box-shadow: var(--pf-panel-shadow);
+  padding: 1.25rem 1.5rem;
+}
+
+.pf-panel-title {
+  display: inline-block;
+  font-size: 1.4rem;
+  font-weight: 800;
+  font-family: Helvetica, sans-serif;
+  color: #0a0a0a;
+  margin: 0 0 0.85rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 3px solid transparent;
+  border-image: linear-gradient(
+      90deg,
+      var(--red),
+      var(--orange),
+      var(--yellow),
+      var(--green),
+      var(--blue),
+      var(--indigo),
+      var(--purple),
+      var(--pink)
+    )
+    1;
+}
+
+/* ---------- Identity card ---------- */
+.pf-identity-card {
+  background: var(--pf-panel-bg);
+  border: 1px solid var(--pf-panel-border);
+  border-radius: 8px;
+  box-shadow: var(--pf-panel-shadow);
+  padding: 1.75rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+}
+
+/* Profile picture placeholder with a rainbow ring on hover */
+.pf-avatar {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--blue) 0%, var(--indigo) 100%);
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  outline: 1px solid oklch(from var(--indigo) calc(l - 0.25) c h);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6), 0 4px 14px rgba(0, 0, 0, 0.15);
+  color: oklch(from var(--indigo) calc(l - 0.35) c h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  transition: outline-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.pf-identity-card:hover .pf-avatar {
+  outline-color: var(--rainbow-cycle);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6),
+    0 0 18px oklch(from var(--rainbow-cycle) l c h / 0.8);
+}
+
+.pf-display-name {
+  font-size: 1.9rem;
+  font-weight: 800;
+  font-family: Helvetica, sans-serif;
+  color: #0a0a0a;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.pf-username {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: oklch(from var(--purple) calc(l - 0.35) c h);
+  background-color: var(--purple);
+  border: 1px solid oklch(from var(--purple) calc(l - 0.2) c h);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+}
+
+/* Reputation meter (same recipe as ci-rep-bar) */
+.pf-reputation {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+
+.pf-rep-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4a4a4a;
+}
+
+.pf-rep-bar {
+  width: 100%;
+  max-width: 240px;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #dcdcdc 0%, #f0f0f0 100%);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.pf-rep-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.25) 100%
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: width 0.4s ease-in-out;
+}
+
+/* Quick stats under the reputation meter */
+.pf-stats {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 1.25rem 0 0;
+}
+
+.pf-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f1f1 100%);
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: 0.6rem 0.4rem;
+}
+
+.pf-stat dt {
+  font-size: 0.62rem;
+  font-weight: 800;
+  font-family: Helvetica, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #5a5a5a;
+}
+
+.pf-stat dd {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+/* ---------- About ---------- */
+.pf-about-text {
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: #2a2a2a;
+  margin: 0;
+}
+
+/* ---------- Badges ---------- */
+.pf-badge-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+}
+
+.pf-badge {
+  --badge-color: var(--purple);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f1f1 100%);
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: 0.75rem 0.9rem;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.pf-badge:hover {
+  border-color: oklch(from var(--badge-color) calc(l - 0.2) c h);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 12px oklch(from var(--badge-color) l c h / 0.8);
+}
+
+.pf-badge-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--badge-color);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  border: 1px solid oklch(from var(--badge-color) calc(l - 0.25) c h);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  color: oklch(from var(--badge-color) calc(l - 0.4) c h);
+}
+
+.pf-badge-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.pf-badge-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-family: Helvetica, sans-serif;
+  color: #0a0a0a;
+}
+
+.pf-badge-desc {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #5a5a5a;
+}
+
+/* ---------- Listings gallery (same card recipe as the marketplace) ---------- */
+.pf-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.pf-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f4f4f4 100%);
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 6px rgba(0, 0, 0, 0.06);
+  padding: 0.5rem;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: scale 0.25s ease-in-out, border-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+
+.pf-card:hover {
+  scale: 1.04;
+  border-color: var(--rainbow-cycle);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 14px oklch(from var(--rainbow-cycle) l c h / 0.9);
+}
+
+.pf-thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background-color: var(--purple);
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0) 55%
+  );
+  box-shadow: inset 0 -14px 24px rgba(0, 0, 0, 0.06);
+}
+
+.pf-gallery .pf-card:nth-child(8n + 1) .pf-thumb { background-color: var(--red); }
+.pf-gallery .pf-card:nth-child(8n + 2) .pf-thumb { background-color: var(--orange); }
+.pf-gallery .pf-card:nth-child(8n + 3) .pf-thumb { background-color: var(--yellow); }
+.pf-gallery .pf-card:nth-child(8n + 4) .pf-thumb { background-color: var(--green); }
+.pf-gallery .pf-card:nth-child(8n + 5) .pf-thumb { background-color: var(--blue); }
+.pf-gallery .pf-card:nth-child(8n + 6) .pf-thumb { background-color: var(--indigo); }
+.pf-gallery .pf-card:nth-child(8n + 7) .pf-thumb { background-color: var(--purple); }
+.pf-gallery .pf-card:nth-child(8n + 8) .pf-thumb { background-color: var(--pink); }
+
+.pf-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0 0.15rem 0.15rem;
+}
+
+.pf-card-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2a2a2a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pf-card-price {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.pf-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.1rem;
+}
+
+.pf-tag {
+  --tag-color: var(--pink);
+  font-size: 0.65rem;
+  background-color: var(--tag-color);
+  color: oklch(from var(--tag-color) calc(l - 0.35) c h);
+  border: 1px solid oklch(from var(--tag-color) calc(l - 0.2) c h);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ---------- Social links ---------- */
+.pf-social-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.pf-social-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f1f1 100%);
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: 0.55rem 0.8rem;
+  text-decoration: none;
+  color: inherit;
+  transition: scale 0.2s ease-in-out, border-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+
+.pf-social-link:hover {
+  scale: 1.03;
+  border-color: var(--rainbow-cycle);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 10px oklch(from var(--rainbow-cycle) l c h / 0.7);
+}
+
+.pf-social-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--blue) 0%, var(--indigo) 100%);
+  border: 1px solid oklch(from var(--indigo) calc(l - 0.25) c h);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  color: oklch(from var(--indigo) calc(l - 0.35) c h);
+}
+
+.pf-social-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.pf-social-platform {
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-family: Helvetica, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #5a5a5a;
+}
+
+.pf-social-handle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .pf-body {
+    grid-template-columns: 1fr;
+  }
+  .pf-left {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .pf-badge-grid {
+    grid-template-columns: 1fr;
+  }
+  .pf-gallery {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
