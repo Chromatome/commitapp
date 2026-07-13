@@ -80,6 +80,12 @@ export async function verifyPhoneOtpAndCreateAccount(
   return { error: null };
 }
 
+/** Log out the current user and clear the session. */
+export async function logOut(): Promise<AuthResult> {
+  const { error } = await supabase.auth.signOut();
+  return { error: error ? error.message : null };
+}
+
 /** Log in with email or phone (E.164) + password. */
 export async function logInWithPassword(
   identifier: { email: string } | { phone: string },
