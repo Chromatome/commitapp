@@ -1,0 +1,207 @@
+/* Purchase Success Page — matches the commission/marketplace indie panel look. */
+
+.ps-page {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  color: #1a1a1a;
+
+  --ps-panel-border: rgba(0, 0, 0, 0.16);
+  --ps-panel-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(240, 240, 240, 0.88) 100%
+  );
+  --ps-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* Navbar recipe shared with commission page */
+.ps-page .navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  background-color: var(--purple);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  border-bottom: 1px solid oklch(from var(--purple) calc(l - 0.25) c h);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.ps-page .n-credits {
+  background: linear-gradient(180deg, #ffffff 0%, #ececec 100%);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.ps-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  pointer-events: none;
+}
+
+.ps-card {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 560px;
+  background: var(--ps-panel-bg);
+  border: 1px solid var(--ps-panel-border);
+  border-radius: 10px;
+  box-shadow: var(--ps-panel-shadow);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+/* Shiny green success badge */
+.ps-check {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--green);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.65) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.25) 100%
+  );
+  border: 1px solid oklch(from var(--green) calc(l - 0.25) c h);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 0 22px oklch(from var(--green) l c h / 0.8);
+  color: oklch(from var(--green) calc(l - 0.4) c h);
+}
+
+.ps-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  font-family: Helvetica, sans-serif;
+  color: #0a0a0a;
+  margin: 0;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.ps-subtitle {
+  font-size: 1rem;
+  line-height: 1.55;
+  color: #3a3a3a;
+  margin: 0;
+  max-width: 42ch;
+  text-wrap: pretty;
+}
+
+/* Order summary panel */
+.ps-summary {
+  width: 100%;
+  text-align: left;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f1f1 100%);
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: 1.1rem 1.25rem;
+}
+
+.ps-summary-title {
+  display: inline-block;
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-family: Helvetica, sans-serif;
+  color: #0a0a0a;
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 3px solid transparent;
+  border-image: linear-gradient(
+      90deg,
+      var(--red),
+      var(--orange),
+      var(--yellow),
+      var(--green),
+      var(--blue),
+      var(--indigo),
+      var(--purple),
+      var(--pink)
+    )
+    1;
+}
+
+.ps-summary-grid {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.ps-summary-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.12);
+}
+
+.ps-summary-item:last-child {
+  border-bottom: none;
+}
+
+.ps-summary-item dt {
+  font-size: 0.78rem;
+  font-weight: 800;
+  font-family: Helvetica, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #5a5a5a;
+}
+
+.ps-summary-item dd {
+  margin: 0;
+  font-size: 0.98rem;
+  color: #1a1a1a;
+  text-align: right;
+}
+
+.ps-summary-total dt,
+.ps-summary-total dd {
+  font-weight: 800;
+  color: #0a0a0a;
+  font-size: 1.05rem;
+}
+
+.ps-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 600px) {
+  .ps-card {
+    padding: 1.5rem 1.25rem;
+  }
+  .ps-title {
+    font-size: 1.8rem;
+  }
+}
