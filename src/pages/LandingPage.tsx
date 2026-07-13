@@ -8,7 +8,7 @@ import example_art from "../assets/example_art.png";
 import "../styles/styles.css";
 import Background from '../components/Background';
 import Button from '../components/Button';
-import logo2 from "../assets/CommIt.svg";
+import logo2 from "../assets/commitsticker.png";
 
 const LandingPage: React.FC = () => {
   const aboutRef = React.useRef<HTMLDivElement>(null);
