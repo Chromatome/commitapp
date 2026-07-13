@@ -297,8 +297,8 @@ const ShapeGrid: React.FC<ShapeGridProps> = ({
       const worldX = (event.clientX - rect.left) - gridOffset.current.x;
       const worldY = (event.clientY - rect.top) - gridOffset.current.y;
 
-      let col = 0;
-      let row = 0;
+      let col: number;
+      let row: number;
 
       if (isHex) {
         col = Math.round(worldX / hexHoriz);
