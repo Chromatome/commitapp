@@ -91,8 +91,11 @@
 }
 
 .n-credits {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
     background-color: #e9e9e9;
-    padding: 0.7rem 1.25rem;
+    padding: 0.45rem 0.5rem 0.45rem 1.25rem;
     border-radius: 4px;
     font-weight: 700;
     font-size: 1rem;
@@ -128,25 +131,40 @@
 }
 
 .n-buy-credits {
+    --btn-color: var(--purple);
+    --bc-border: oklch(from var(--btn-color) calc(l - 0.3) c h);
+
+    position: relative;
+    z-index: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    background-color: #7c3aed;
-    border: none;
+    width: 1.9rem;
+    height: 1.9rem;
+    flex-shrink: 0;
+    background-color: var(--btn-color);
+    background-image: -webkit-linear-gradient(top, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0.0) 51%, rgba(255, 255, 255, 0.2) 100%);
+    border: 1px solid var(--bc-border);
     border-radius: 4px;
-    padding: 0.7rem 1.1rem;
-    font-family: Helvetica, sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #ffffff;
-    white-space: nowrap;
+    padding: 0;
+    color: var(--bc-border);
     cursor: pointer;
-    transition: background-color 0.15s ease-in-out;
+    transition: scale 0.3s ease-in-out;
+}
+
+.n-buy-credits::before {
+    content: "";
+    background: conic-gradient(from var(--rotation), var(--red), var(--orange), var(--yellow), var(--green), var(--blue), var(--indigo), var(--purple), var(--pink));
+    filter: blur(6px);
+    opacity: 1;
+    position: absolute;
+    inset: -3px;
+    z-index: -1;
+    transition: opacity 0.3s ease-in-out;
 }
 
 .n-buy-credits:hover {
-    background-color: #6d28d9;
+    scale: 1.1;
 }
 
 .n-buy-credits svg {
