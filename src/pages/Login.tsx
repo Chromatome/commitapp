@@ -6,7 +6,13 @@ import Background from '../components/Background';
 import Button from '../components/Button';
 import LinkButton from '../components/LinkButton';
 import logo from "../assets/commitsticker.png";
-import { supabase } from '../lib/supabase';
+import {
+  PHONE_VERIFICATION_ENABLED,
+  signUpWithoutVerification,
+  sendPhoneOtp,
+  verifyPhoneOtpAndCreateAccount,
+  logInWithPassword,
+} from '../lib/auth';
 
 type Mode = 'login' | 'signup';
 type SignupStep = 'details' | 'verify';
@@ -75,10 +81,7 @@ const Login: React.FC = () => {
     try {
       let result;
       if (isEmail(identifier)) {
-        result = await supabase.auth.signInWithPassword({
-          email: identifier.trim(),
-          password: loginPassword,
-        });
+        result = await logInWithPassword({ email: identifier.trim() }, loginPassword);
       } else {
         const e164 = toE164(identifier);
         if (!e164) {
@@ -86,14 +89,11 @@ const Login: React.FC = () => {
           setLoading(false);
           return;
         }
-        result = await supabase.auth.signInWithPassword({
-          phone: e164,
-          password: loginPassword,
-        });
+        result = await logInWithPassword({ phone: e164 }, loginPassword);
       }
 
       if (result.error) {
-        setError(result.error.message);
+        setError(result.error);
         return;
       }
       navigate('/marketplace');
@@ -102,14 +102,6 @@ const Login: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const sendOtp = async (e164: string) => {
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      phone: e164,
-      options: { shouldCreateUser: true },
-    });
-    return otpError;
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -137,16 +129,26 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const otpError = await sendOtp(e164);
-      if (otpError) {
-        setError(otpError.message);
-        return;
+      if (PHONE_VERIFICATION_ENABLED) {
+        const { error: otpError } = await sendPhoneOtp(e164);
+        if (otpError) {
+          setError(otpError);
+          return;
+        }
+        setVerifiedPhone(e164);
+        setSignupStep('verify');
+        setNotice(`We sent a 6-digit code to ${e164}. Enter it below to verify your phone.`);
+      } else {
+        const { error: signupError } = await signUpWithoutVerification(email, e164, signupPassword);
+        if (signupError) {
+          setError(signupError);
+          return;
+        }
+        setNotice('Account created! Check your email for a confirmation link if required, then log in.');
+        setTimeout(() => navigate('/marketplace'), 2000);
       }
-      setVerifiedPhone(e164);
-      setSignupStep('verify');
-      setNotice(`We sent a 6-digit code to ${e164}. Enter it below to verify your phone.`);
     } catch {
-      setError('Something went wrong sending the code. Please try again.');
+      setError('Something went wrong creating your account. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -164,23 +166,14 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        phone: verifiedPhone,
-        token: otpCode.trim(),
-        type: 'sms',
-      });
+      const { error: verifyError } = await verifyPhoneOtpAndCreateAccount(
+        verifiedPhone,
+        otpCode,
+        email,
+        signupPassword,
+      );
       if (verifyError) {
-        setError(verifyError.message);
-        return;
-      }
-
-      // Phone verified & session created — now attach email + password to the account.
-      const { error: updateError } = await supabase.auth.updateUser({
-        email: email.trim(),
-        password: signupPassword,
-      });
-      if (updateError) {
-        setError(`Phone verified, but we couldn't save your email: ${updateError.message}`);
+        setError(verifyError);
         return;
       }
 
@@ -199,9 +192,9 @@ const Login: React.FC = () => {
     setNotice(null);
     setLoading(true);
     try {
-      const otpError = await sendOtp(verifiedPhone);
+      const { error: otpError } = await sendPhoneOtp(verifiedPhone);
       if (otpError) {
-        setError(otpError.message);
+        setError(otpError);
       } else {
         setNotice(`A new code was sent to ${verifiedPhone}.`);
       }
@@ -339,12 +332,22 @@ const Login: React.FC = () => {
                 </div>
 
                 <p className="login-hint">
-                  Both email and phone are required to sign up — we&apos;ll text you a code to verify your number before creating your account.
+                  {PHONE_VERIFICATION_ENABLED
+                    ? "Both email and phone are required to sign up — we'll text you a code to verify your number before creating your account."
+                    : 'Both email and a valid phone number are required to sign up.'}
                 </p>
 
                 <div className="login-submit-row">
                   <Button
-                    label={loading ? 'Sending Code…' : 'Send Verification Code'}
+                    label={
+                      loading
+                        ? PHONE_VERIFICATION_ENABLED
+                          ? 'Sending Code…'
+                          : 'Creating Account…'
+                        : PHONE_VERIFICATION_ENABLED
+                          ? 'Send Verification Code'
+                          : 'Create Account'
+                    }
                     onClick={() => {}}
                     type="submit"
                     disabled={loading}
