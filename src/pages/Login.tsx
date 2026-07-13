@@ -4,6 +4,7 @@ import '../styles/styles.css';
 import Background from '../components/Background';
 import Button from '../components/Button';
 import LinkButton from '../components/LinkButton';
+import logo from "../assets/commitsticker.png";
 
 type Mode = 'login' | 'signup';
 
@@ -75,7 +76,9 @@ const Login: React.FC = () => {
       </header>
 
       <main>
-        <div className="login-logo">CommIt</div>
+        <div className="login-logo">
+          <img src={logo} alt="CommIt logo" />
+        </div>
 
         <div className="login-card-glow">
           <div className="login-card">

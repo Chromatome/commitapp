@@ -3,6 +3,8 @@ import '../styles/styles.css';
 import '../styles/commissioninfo.css';
 import Navbar from '../components/Navbar';
 import Background from '../components/Background';
+import Button from '../components/Button';
+import LinkButton from '../components/LinkButton';
 
 type Review = {
   id: number;
@@ -130,6 +132,15 @@ const CommissionInfo: React.FC = () => {
       <div className="ci-body">
         {/* Left column: showcase + purchase */}
         <div className="ci-left">
+          <div className="ci-purchase-card">
+            <h1 className="ci-comm-title">{COMMISSION.title}</h1>
+            <p className="ci-comm-price">{COMMISSION.priceCredits} Credits + Fee</p>
+            <div className="ci-purchase-actions">
+              <LinkButton label="Purchase" href="/purchase" isPrimary color="var(--pink)"/>
+              <Button label="Contact" onClick={() => {}} color="var(--gray-bg)" />
+            </div>
+          </div>
+
           <div className="ci-showcase">
             {/* Image carousel placeholder */}
             <div className="ci-carousel" aria-label="Commission preview carousel">
@@ -169,18 +180,7 @@ const CommissionInfo: React.FC = () => {
             </div>
           </div>
 
-          <div className="ci-purchase-card">
-            <h1 className="ci-comm-title">{COMMISSION.title}</h1>
-            <p className="ci-comm-price">{COMMISSION.priceCredits} Credits + Fee</p>
-            <div className="ci-purchase-actions">
-              <button type="button" className="ci-btn ci-btn-purchase">
-                Purchase
-              </button>
-              <button type="button" className="ci-btn ci-btn-contact">
-                Contact
-              </button>
-            </div>
-          </div>
+  
         </div>
 
         {/* Right column: scrollable info */}

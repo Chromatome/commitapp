@@ -1,7 +1,3 @@
-/* Marketplace Page Styles — modern indie web look.
-   Shiny beveled buttons, shaded panels, and the interactive shapegrid
-   background showing through between elements (matches landing/login). */
-
 .marketplace-page {
   position: relative;
   isolation: isolate;
@@ -9,7 +5,6 @@
   color: #1a1a1a;
 }
 
-/* ---------- Shared shaded-panel recipe ---------- */
 .marketplace-page {
   --mp-panel-border: rgba(0, 0, 0, 0.16);
   --mp-panel-bg: linear-gradient(
@@ -21,7 +16,6 @@
     0 6px 18px rgba(0, 0, 0, 0.08);
 }
 
-/* ---------- Navbar (scoped so it doesn't clash with landing) ---------- */
 .marketplace-page .navbar {
   display: flex;
   align-items: center;
@@ -50,9 +44,6 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* ---------- Body Layout ---------- */
-/* Transparent + pointer-events pass-through so the shapegrid stays
-   interactive between panels (same trick as the landing page). */
 .mp-body {
   position: relative;
   z-index: 1;
@@ -70,7 +61,6 @@
   pointer-events: auto;
 }
 
-/* ---------- Sidebar ---------- */
 .mp-sidebar {
   flex: 0 0 160px;
   display: flex;
@@ -126,7 +116,6 @@
   align-content: flex-start;
 }
 
-/* Shiny indie-web filter buttons */
 .mp-filter-btn {
   --fb-color: var(--purple);
   --fb-border: oklch(from var(--fb-color) calc(l - 0.3) c h);
@@ -157,7 +146,6 @@
   filter: brightness(1.03);
 }
 
-/* Pressed-in look when active */
 .mp-filter-btn.active {
   background-image: linear-gradient(
     to bottom,
@@ -167,6 +155,93 @@
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
   transform: translateY(1px);
   scale: 1;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mp-filter-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: Helvetica, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #5a5a5a;
+  margin-top: 0.35rem;
+}
+
+.mp-filter-label:first-child {
+  margin-top: 0;
+}
+
+.mp-filter-value {
+  font-size: 0.8rem;
+  color: #1a1a1a;
+}
+
+.mp-price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mp-price-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.mp-price-prefix {
+  position: absolute;
+  left: 0.45rem;
+  font-size: 0.8rem;
+  color: #8a8a8a;
+  pointer-events: none;
+}
+
+.mp-price-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.4rem 0.3rem 0.4rem 1.1rem;
+  font-size: 0.85rem;
+  color: #1a1a1a;
+  background-color: #ffffff;
+  border: 1px solid #b5b5b5;
+  border-radius: 6px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.mp-price-field input:focus {
+  outline: none;
+  border-color: var(--rainbow-cycle);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08),
+    0 0 6px oklch(from var(--rainbow-cycle) l c h / 0.9);
+}
+
+.mp-price-sep {
+  color: #8a8a8a;
+  flex-shrink: 0;
+}
+
+.mp-rep-slider {
+  width: 100%;
+  accent-color: var(--purple);
+  cursor: pointer;
 }
 
 .mp-clear-btn {
@@ -184,7 +259,6 @@
   color: #1a1a1a;
 }
 
-/* ---------- Main Browse Area ---------- */
 .mp-main {
   flex: 1 1 auto;
   display: flex;
@@ -193,7 +267,6 @@
   min-width: 0;
 }
 
-/* ---------- Search ---------- */
 .mp-search {
   background: var(--mp-panel-bg);
   border: 1px solid var(--mp-panel-border);
@@ -266,7 +339,6 @@
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* ---------- Sections ---------- */
 .mp-section {
   background: var(--mp-panel-bg);
   border: 1px solid var(--mp-panel-border);
@@ -304,7 +376,56 @@
   gap: 1rem;
 }
 
-/* ---------- Cards ---------- */
+.mp-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0.5rem 0.25rem 0.85rem;
+  margin: -0.5rem -0.25rem 0;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+}
+
+.mp-row::-webkit-scrollbar {
+  height: 8px;
+}
+
+.mp-row::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mp-row::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 999px;
+}
+
+.mp-row .mp-card {
+  flex: 0 0 auto;
+  width: calc(var(--thumb-width, 226px) + 1rem);
+  scroll-snap-align: start;
+}
+
+.mp-row .mp-thumb {
+  width: 100%;
+  height: 170px;
+  aspect-ratio: auto;
+}
+
+.mp-row .mp-card-tags {
+  flex-wrap: nowrap;
+  overflow: hidden;
+  min-width: 0;
+  mask-image: linear-gradient(90deg, #000 calc(100% - 1rem), transparent);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 1rem), transparent);
+}
+
+.mp-row .mp-tag {
+  flex: 0 0 auto;
+}
+
 .mp-card {
   background: linear-gradient(180deg, #ffffff 0%, #f4f4f4 100%);
   border: 1px solid rgba(0, 0, 0, 0.14);
@@ -322,7 +443,6 @@
     box-shadow 0.2s ease-in-out;
 }
 
-/* Animated rainbow border on hover (driven by :root --rainbow-cycle) */
 .mp-card:hover {
   scale: 1.04;
   border-color: var(--rainbow-cycle);
@@ -344,15 +464,22 @@
   box-shadow: inset 0 -14px 24px rgba(0, 0, 0, 0.06);
 }
 
-/* Cycle the pastel palette across thumbnails for an indie collage feel */
-.mp-grid .mp-card:nth-child(8n + 1) .mp-thumb { background-color: var(--red); }
-.mp-grid .mp-card:nth-child(8n + 2) .mp-thumb { background-color: var(--orange); }
-.mp-grid .mp-card:nth-child(8n + 3) .mp-thumb { background-color: var(--yellow); }
-.mp-grid .mp-card:nth-child(8n + 4) .mp-thumb { background-color: var(--green); }
-.mp-grid .mp-card:nth-child(8n + 5) .mp-thumb { background-color: var(--blue); }
-.mp-grid .mp-card:nth-child(8n + 6) .mp-thumb { background-color: var(--indigo); }
-.mp-grid .mp-card:nth-child(8n + 7) .mp-thumb { background-color: var(--purple); }
-.mp-grid .mp-card:nth-child(8n + 8) .mp-thumb { background-color: var(--pink); }
+.mp-grid .mp-card:nth-child(8n + 1) .mp-thumb,
+.mp-row .mp-card:nth-child(8n + 1) .mp-thumb { background-color: var(--red); }
+.mp-grid .mp-card:nth-child(8n + 2) .mp-thumb,
+.mp-row .mp-card:nth-child(8n + 2) .mp-thumb { background-color: var(--orange); }
+.mp-grid .mp-card:nth-child(8n + 3) .mp-thumb,
+.mp-row .mp-card:nth-child(8n + 3) .mp-thumb { background-color: var(--yellow); }
+.mp-grid .mp-card:nth-child(8n + 4) .mp-thumb,
+.mp-row .mp-card:nth-child(8n + 4) .mp-thumb { background-color: var(--green); }
+.mp-grid .mp-card:nth-child(8n + 5) .mp-thumb,
+.mp-row .mp-card:nth-child(8n + 5) .mp-thumb { background-color: var(--blue); }
+.mp-grid .mp-card:nth-child(8n + 6) .mp-thumb,
+.mp-row .mp-card:nth-child(8n + 6) .mp-thumb { background-color: var(--indigo); }
+.mp-grid .mp-card:nth-child(8n + 7) .mp-thumb,
+.mp-row .mp-card:nth-child(8n + 7) .mp-thumb { background-color: var(--purple); }
+.mp-grid .mp-card:nth-child(8n + 8) .mp-thumb,
+.mp-row .mp-card:nth-child(8n + 8) .mp-thumb { background-color: var(--pink); }
 
 .mp-card-meta {
   display: flex;
@@ -373,6 +500,30 @@
 .mp-card-artist {
   font-size: 0.75rem;
   color: #6a6a6a;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mp-card-rep {
+  --rep-hue: 85;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: oklch(0.42 0.13 var(--rep-hue));
+  background-color: oklch(0.87 0.12 var(--rep-hue));
+  border: 1px solid oklch(0.68 0.14 var(--rep-hue));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
 }
 
 .mp-card-price {
@@ -400,7 +551,6 @@
   white-space: nowrap;
 }
 
-/* ---------- Filtered Results ---------- */
 .mp-results-header {
   display: flex;
   align-items: baseline;
@@ -424,7 +574,6 @@
   padding: 1rem 0;
 }
 
-/* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   .mp-grid {
     grid-template-columns: repeat(3, 1fr);

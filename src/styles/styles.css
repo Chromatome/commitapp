@@ -75,7 +75,7 @@
     text-decoration: none;
     width: 200px;
     height: auto;
-    margin: 1rem 0.4rem;
+    margin: 1rem -1rem;
 }
 
 .n-logo-img {
@@ -132,7 +132,7 @@
         content: "";
         background: conic-gradient(from var(--rotation), var(--red), var(--orange), var(--yellow), var(--green), var(--blue), var(--indigo), var(--purple), var(--pink));
         filter: blur(20px);
-        opacity: var(--o);
+        opacity: 1;
         position: absolute;
         inset: -10px;
         z-index: -1; 
@@ -141,7 +141,6 @@
 }
 
 .btn-wrapper {
-    --o: 0.8;
     display: inline-block;
     transition: scale 0.3s ease-in-out, opacity 0.3s ease-in-out;
 

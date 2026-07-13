@@ -1,6 +1,6 @@
 import React from 'react';
 import '../styles/styles.css';
-import logo from "../assets/CommIt.svg";
+import logo from "../assets/commitsticker.png";
 
 const Navbar: React.FC = () => {
   return (
