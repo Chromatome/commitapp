@@ -184,6 +184,17 @@
   line-height: 1.4;
 }
 
+.login-notice {
+  font-family: Helvetica, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: oklch(from var(--green) calc(l - 0.35) c h);
+  background: linear-gradient(180deg, #ffffff 0%, var(--green) 160%);
+  border: 1px solid oklch(from var(--green) calc(l - 0.2) c h);
+  padding: 0.5rem 0.7rem;
+  line-height: 1.4;
+}
+
 .login-submit-row {
   display: flex;
   justify-content: center;
