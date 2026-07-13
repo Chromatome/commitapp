@@ -66,7 +66,7 @@ const LandingPage: React.FC = () => {
         {/* Description & Features Section */}
         <section className="features-section">
           <div className="fs-content" ref={aboutRef}>
-            <h2>About Our Platform</h2>
+            <h2>About CommIt</h2>
             <p className="features-description">
               Welcome to the ultimate solution for your productivity needs. Our platform is designed 
               to streamline your daily tasks, providing you with the tools necessary to scale your 
