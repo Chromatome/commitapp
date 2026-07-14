@@ -155,6 +155,7 @@
     color: var(--bc-border);
     cursor: pointer;
     transition: scale 0.3s ease-in-out;
+    overflow: hidden;
 }
 
 .n-buy-credits::before {
