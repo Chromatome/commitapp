@@ -41,6 +41,7 @@ export type Commission = {
   times_sold: number;
   phases: string[];
   artist_terms: string;
+  thumbnail_url: string | null;
   created_at: string;
 };
 
@@ -122,13 +123,14 @@ export type MarketplaceListing = {
   created_at: string;
   artist_name: string;
   artist_reputation: number;
+  thumbnail_url: string | null;
 };
 
 /** Fetch all commission listings (newest first) with artist name + reputation for the marketplace. */
 export async function fetchMarketplaceListings(): Promise<MarketplaceListing[]> {
   const { data, error } = await supabase
     .from('commissions')
-    .select('id, title, price, tags, created_at, profiles(username, reputation)')
+    .select('id, title, price, tags, created_at, thumbnail_url, profiles(username, reputation)')
     .order('created_at', { ascending: false })
     .limit(100);
   if (error) throw new Error(error.message);
@@ -140,6 +142,7 @@ export async function fetchMarketplaceListings(): Promise<MarketplaceListing[]> 
       price: number;
       tags: unknown;
       created_at: string;
+      thumbnail_url: string | null;
       profiles: { username: string; reputation: number } | null;
     };
     return {
@@ -150,6 +153,7 @@ export async function fetchMarketplaceListings(): Promise<MarketplaceListing[]> 
       created_at: joined.created_at,
       artist_name: joined.profiles?.username ?? 'Unknown Artist',
       artist_reputation: joined.profiles?.reputation ?? 50,
+      thumbnail_url: joined.thumbnail_url ?? null,
     };
   });
 }
@@ -219,17 +223,52 @@ export async function fetchOwnProfile(userId: string): Promise<Profile | null> {
 export async function createCommission(
   profileId: string,
   input: NewCommissionInput,
-): Promise<{ error: string | null }> {
-  const { error } = await supabase.from('commissions').insert({
-    profile_id: profileId,
-    title: input.title.trim(),
-    price: input.price,
-    payment_type: input.payment_type,
-    split_upfront_percent: input.payment_type === 'split' ? input.split_upfront_percent : null,
-    time_taken: input.time_taken.trim(),
-    tags: input.tags,
-    phases: input.phases,
-    artist_terms: input.artist_terms.trim(),
-  });
-  return { error: error ? error.message : null };
+): Promise<{ id: string | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from('commissions')
+    .insert({
+      profile_id: profileId,
+      title: input.title.trim(),
+      price: input.price,
+      payment_type: input.payment_type,
+      split_upfront_percent: input.payment_type === 'split' ? input.split_upfront_percent : null,
+      time_taken: input.time_taken.trim(),
+      tags: input.tags,
+      phases: input.phases,
+      artist_terms: input.artist_terms.trim(),
+    })
+    .select('id')
+    .single();
+  return { id: data?.id ?? null, error: error ? error.message : null };
+}
+
+/**
+ * Upload a thumbnail image for a commission listing to the public
+ * `commission-thumbnails` bucket ({profileId}/{commissionId}.ext — RLS
+ * restricts writes to the owner's folder, same pattern as avatars) and save
+ * its public URL on the commission row.
+ */
+export async function uploadCommissionThumbnail(
+  commissionId: string,
+  profileId: string,
+  file: File,
+): Promise<{ url: string | null; error: string | null }> {
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+  const path = `${profileId}/${commissionId}-${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('commission-thumbnails')
+    .upload(path, file, { cacheControl: '3600', upsert: true });
+  if (uploadError) return { url: null, error: uploadError.message };
+
+  const { data } = supabase.storage.from('commission-thumbnails').getPublicUrl(path);
+  const url = data.publicUrl;
+
+  const { error: saveError } = await supabase
+    .from('commissions')
+    .update({ thumbnail_url: url })
+    .eq('id', commissionId);
+  if (saveError) return { url: null, error: saveError.message };
+
+  return { url, error: null };
 }

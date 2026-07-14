@@ -425,6 +425,8 @@
 .mp-row .mp-card {
   flex: 0 0 auto;
   width: calc(var(--thumb-width, 226px) + 1rem);
+  max-width: 300px;
+  min-width: 200px; 
   scroll-snap-align: start;
 }
 
@@ -472,7 +474,6 @@
 
 .mp-thumb {
   width: 100%;
-  aspect-ratio: 4 / 3;
   border-radius: 6px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   background-color: var(--purple);
@@ -482,6 +483,15 @@
     rgba(255, 255, 255, 0) 55%
   );
   box-shadow: inset 0 -14px 24px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+/* A real uploaded thumbnail replaces the colored placeholder entirely. */
+.mp-thumb-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .mp-grid .mp-card:nth-child(8n + 1) .mp-thumb,

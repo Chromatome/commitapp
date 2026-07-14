@@ -13,6 +13,7 @@ import {
   createCommission,
   updateProfile,
   uploadAvatar,
+  uploadCommissionThumbnail,
   type Commission,
   type NewCommissionInput,
   type PaymentType,
@@ -58,7 +59,11 @@ const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) =>
     href={`/commission?id=${commission.id}`}
     aria-label={`View details for ${commission.title}`}
   >
-    <div className="mp-thumb" aria-hidden="true" />
+    <div className="mp-thumb" aria-hidden="true">
+      {commission.thumbnail_url && (
+        <img src={commission.thumbnail_url} alt="" className="mp-thumb-img" />
+      )}
+    </div>
     <div className="mp-card-meta">
       <span className="mp-card-title">{commission.title}</span>
       <span className="mp-card-price">{commission.price.toLocaleString()} Credits</span>
@@ -112,6 +117,13 @@ const CreateCommissionForm: React.FC<{
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  // Thumbnail: held locally (with an object-URL preview) until the
+  // commission is created, since the upload path is keyed by commission id.
+  const thumbInputRef = useRef<HTMLInputElement>(null);
+  const [thumbFile, setThumbFile] = useState<File | null>(null);
+  const [thumbPreview, setThumbPreview] = useState<string | null>(null);
+  const [thumbError, setThumbError] = useState<string | null>(null);
+
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
 
@@ -120,6 +132,35 @@ const CreateCommissionForm: React.FC<{
       ...f,
       tags: f.tags.includes(tag) ? f.tags.filter((t) => t !== tag) : [...f.tags, tag],
     }));
+
+  const handleThumbFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setThumbError('Please choose an image file (PNG, JPG, WebP, or GIF).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setThumbError('Image must be 5MB or smaller.');
+      return;
+    }
+    setThumbError(null);
+    setThumbFile(file);
+    setThumbPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+  };
+
+  const clearThumb = () => {
+    setThumbPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setThumbFile(null);
+    setThumbError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,13 +199,23 @@ const CreateCommissionForm: React.FC<{
 
     setSubmitting(true);
     try {
-      const { error: createError } = await createCommission(profileId, input);
-      if (createError) {
-        setError(createError);
+      const { id, error: createError } = await createCommission(profileId, input);
+      if (createError || !id) {
+        setError(createError ?? 'Something went wrong creating the commission. Please try again.');
         return;
       }
+
+      let thumbWarning: string | null = null;
+      if (thumbFile) {
+        const { error: thumbUploadError } = await uploadCommissionThumbnail(id, profileId, thumbFile);
+        if (thumbUploadError) {
+          thumbWarning = ` (thumbnail failed to upload: ${thumbUploadError})`;
+        }
+      }
+
       setForm(INITIAL_FORM);
-      setNotice('Commission listed! It now appears in your gallery below.');
+      clearThumb();
+      setNotice(`Commission listed! It now appears in your gallery below.${thumbWarning ?? ''}`);
       onCreated();
     } catch {
       setError('Something went wrong creating the commission. Please try again.');
@@ -176,6 +227,48 @@ const CreateCommissionForm: React.FC<{
   return (
     <form className="pf-form" onSubmit={handleSubmit}>
       <div className="pf-form-grid">
+        <div className="pf-field pf-field-wide">
+          <span className="pf-field-label">Thumbnail</span>
+          <div className="pf-thumb-upload-row">
+            <div className="pf-thumb-upload" aria-hidden={!thumbPreview}>
+              {thumbPreview ? (
+                <img src={thumbPreview || "/placeholder.svg"} alt="" className="pf-thumb-upload-img" />
+              ) : (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M4 5a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2h-3.17l-1.24-1.5a2 2 0 00-1.54-.5H9.95a2 2 0 00-1.54.5L7.17 5H4zm8 4a4 4 0 110 8 4 4 0 010-8z" />
+                </svg>
+              )}
+            </div>
+            <div className="pf-thumb-upload-actions">
+              <button
+                type="button"
+                className="pf-avatar-edit"
+                onClick={() => thumbInputRef.current?.click()}
+              >
+                {thumbPreview ? 'Change image' : 'Add thumbnail'}
+              </button>
+              {thumbPreview && (
+                <button type="button" className="pf-avatar-edit" onClick={clearThumb}>
+                  Remove
+                </button>
+              )}
+              <input
+                ref={thumbInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="sr-only"
+                aria-label="Upload a thumbnail image for this commission"
+                onChange={handleThumbFile}
+              />
+            </div>
+          </div>
+          {thumbError && (
+            <p className="pf-form-error pf-avatar-error" role="alert">
+              {thumbError}
+            </p>
+          )}
+        </div>
+
         <label className="pf-field">
           <span className="pf-field-label">Title</span>
           <input

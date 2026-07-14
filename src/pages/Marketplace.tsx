@@ -17,6 +17,8 @@ type Commission = {
   tags: string[];
   /** Reputation for real listings comes from the artist's profile row. */
   reputation?: number;
+  /** Uploaded thumbnail for real listings; placeholders have none. */
+  thumbnailUrl?: string | null;
 };
 
 // Filter categories shown in the sidebar.
@@ -93,15 +95,20 @@ const idSeed = (id: number | string) =>
 const getThumbWidth = (id: number | string) =>
   Math.round(THUMB_HEIGHT * THUMB_RATIOS[idSeed(id) % THUMB_RATIOS.length]);
 
-const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) => (
+export const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) => (
   <a
     className="mp-card"
     href={`/commission?id=${commission.id}`}
     style={{ '--thumb-width': `${getThumbWidth(commission.id)}px` } as React.CSSProperties}
     aria-label={`View details for ${commission.title} by ${commission.artist}`}
   >
-    {/* Thumbnail placeholder — dimensions vary to simulate different resolutions */}
-    <div className="mp-thumb" aria-hidden="true" />
+    {/* Thumbnail — real upload if the artist added one, otherwise a colored
+        placeholder whose dimensions vary to simulate different resolutions */}
+    <div className="mp-thumb" aria-hidden="true">
+      {commission.thumbnailUrl && (
+        <img src={commission.thumbnailUrl} alt="" className="mp-thumb-img" />
+      )}
+    </div>
     <div className="mp-card-meta">
       <span className="mp-card-title">{commission.title}</span>
       <span className="mp-card-artist">
@@ -159,6 +166,7 @@ const MarketPlace: React.FC = () => {
         price: l.price,
         tags: l.tags,
         reputation: l.artist_reputation,
+        thumbnailUrl: l.thumbnail_url,
       })),
     [dbListings],
   );
