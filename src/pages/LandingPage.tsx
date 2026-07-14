@@ -8,7 +8,7 @@ import example_art from "../assets/example_art.png";
 import "../styles/styles.css";
 import Background from '../components/Background';
 import Button from '../components/Button';
-import logo2 from "../assets/CommIt.svg";
+import logo2 from "../assets/commitsticker.png";
 
 const LandingPage: React.FC = () => {
   const aboutRef = React.useRef<HTMLDivElement>(null);
@@ -66,7 +66,7 @@ const LandingPage: React.FC = () => {
         {/* Description & Features Section */}
         <section className="features-section">
           <div className="fs-content" ref={aboutRef}>
-            <h2>About Our Platform</h2>
+            <h2>About CommIt</h2>
             <p className="features-description">
               Welcome to the ultimate solution for your productivity needs. Our platform is designed 
               to streamline your daily tasks, providing you with the tools necessary to scale your 

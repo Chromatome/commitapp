@@ -68,7 +68,8 @@ main {
 }
 
 .hero-logo {
-  width: 300px;
+  width: 250px;
+
   & img {
     object-fit: cover;
     width: 100%;

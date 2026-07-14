@@ -47,6 +47,11 @@
   color: var(--pink);
   filter: drop-shadow(0px 0px 20px #0000002e);
   text-align: center;
+
+  & img {
+    width: 250px;
+    height: auto;
+  }
 }
 
 /* The Card */
