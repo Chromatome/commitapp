@@ -19,9 +19,7 @@ createRoot(document.getElementById('root')!).render(
         <Route
           path="/marketplace"
           element={
-            <RequireAuth>
-              <MarketPlace />
-            </RequireAuth>
+            <MarketPlace />
           }
         />
         <Route
