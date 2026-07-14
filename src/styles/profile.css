@@ -594,6 +594,20 @@
   margin: 0;
 }
 
+.pf-panels {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+
+  & .pf-panel:nth-child(1) {
+    flex-grow: 2;
+  }
+
+  & .pf-panel:nth-child(2) {
+    flex-grow: 1;
+  }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 720px) {
   .pf-header {

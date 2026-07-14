@@ -566,6 +566,7 @@ const Profile: React.FC = () => {
           )}
         </header>
 
+        <div className="pf-panels">
         {/* ---- About me ---- */}
         <section className="pf-panel" aria-label="About me">
           <div className="pf-panel-header">
@@ -640,6 +641,7 @@ const Profile: React.FC = () => {
         )}
 
         {/* ---- Latest reviews on this artist's commissions ---- */}
+        
         <section className="pf-panel" aria-label="Latest reviews">
           <h2 className="pf-panel-title">Latest Reviews</h2>
           {isLoading ? (
@@ -668,6 +670,7 @@ const Profile: React.FC = () => {
             </p>
           )}
         </section>
+        </div>
 
         {/* ---- Commission gallery (marketplace formatting) ---- */}
         <section className="pf-panel" aria-label="Listed commissions">
