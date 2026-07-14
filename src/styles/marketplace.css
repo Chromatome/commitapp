@@ -97,17 +97,23 @@
 }
 
 .mp-profile-avatar {
-  width: 90px;
-  height: 90px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
-  background: linear-gradient(180deg, var(--blue) 0%, var(--indigo) 100%);
-  border: 1px solid oklch(from var(--indigo) calc(l - 0.25) c h);
+  background: transparent;
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6);
   color: oklch(from var(--indigo) calc(l - 0.35) c h);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+
+  & img {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+  }
 }
 
 .mp-profile-avatar-img {
