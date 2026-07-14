@@ -1,0 +1,490 @@
+/* Messages Page — one-on-one DMs styled like an old SMS app, using the same
+   modern indie recipe as the rest of the site: shaded panels, shiny bevels,
+   pink/gray palette. */
+
+.messages-page {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: #1a1a1a;
+}
+
+.messages-page {
+  --msg-panel-border: rgba(0, 0, 0, 0.16);
+  --msg-panel-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(240, 240, 240, 0.88) 100%
+  );
+  --msg-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* Navbar treatment consistent with other pages */
+.messages-page .navbar {
+  background-color: var(--pink);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  border-bottom: 1px solid oklch(from var(--pink) calc(l - 0.25) c h);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ---------- Shell: inbox + thread panes ---------- */
+.msg-shell {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  gap: 1.25rem;
+  margin: 1.25rem 1.5rem 1.5rem;
+  min-height: 0;
+  height: calc(100vh - 110px);
+}
+
+.msg-inbox,
+.msg-thread {
+  background: var(--msg-panel-bg);
+  border: 1px solid var(--msg-panel-border);
+  border-radius: 8px;
+  box-shadow: var(--msg-panel-shadow);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.msg-inbox {
+  flex: 0 0 320px;
+}
+
+.msg-thread {
+  flex: 1;
+}
+
+/* ---------- Inbox ---------- */
+.msg-inbox-header {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(244, 244, 244, 0.6));
+}
+
+.msg-inbox-header h1 {
+  font-family: Helvetica, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #2a2a2a;
+}
+
+.msg-thread-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.msg-thread-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  font-family: Helvetica, sans-serif;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.msg-thread-item:hover {
+  background-color: rgba(255, 198, 255, 0.25);
+}
+
+.msg-thread-item.active {
+  background-color: rgba(255, 198, 255, 0.45);
+}
+
+.msg-avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, var(--blue) 0%, var(--indigo) 100%);
+  border: 1px solid oklch(from var(--indigo) calc(l - 0.25) c h);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  color: oklch(from var(--indigo) calc(l - 0.35) c h);
+}
+
+.msg-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.msg-thread-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.msg-thread-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.msg-thread-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2a2a2a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.msg-thread-time {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  color: #8a8a8a;
+}
+
+.msg-thread-preview {
+  font-size: 0.8rem;
+  color: #6a6a6a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Unread: bold name + preview and a pink dot, old-SMS style */
+.msg-thread-item.unread .msg-thread-name,
+.msg-thread-item.unread .msg-thread-preview {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.msg-unread-dot {
+  flex-shrink: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background-color: oklch(from var(--pink) calc(l - 0.25) c h);
+  border: 1px solid oklch(from var(--pink) calc(l - 0.4) c h);
+  box-shadow: 0 0 6px oklch(from var(--pink) calc(l - 0.15) c h / 0.9);
+}
+
+/* ---------- Thread ---------- */
+.msg-thread-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(244, 244, 244, 0.6));
+}
+
+.msg-back-btn {
+  display: none;
+  background: linear-gradient(180deg, #ffffff 0%, #ececec 100%);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.1);
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: #333;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0 0.15rem;
+}
+
+.msg-thread-header-name {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: Helvetica, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2a2a2a;
+  cursor: pointer;
+}
+
+.msg-thread-header-name:hover {
+  text-decoration: underline;
+}
+
+/* Scrollable message area */
+.msg-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem;
+}
+
+/* Timestamp separators like classic SMS apps */
+.msg-separator {
+  align-self: center;
+  font-family: Helvetica, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #8a8a8a;
+  padding: 0.5rem 0 0.25rem;
+}
+
+.msg-row {
+  display: flex;
+}
+
+.msg-row.out {
+  justify-content: flex-end;
+}
+
+.msg-row.in {
+  justify-content: flex-start;
+}
+
+/* Bubbles: glossy bevel treatment matching site buttons */
+.msg-bubble {
+  max-width: min(70%, 480px);
+  padding: 0.55rem 0.85rem;
+  border-radius: 16px;
+  font-family: Helvetica, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.msg-row.out .msg-bubble {
+  background-color: var(--pink);
+  border: 1px solid oklch(from var(--pink) calc(l - 0.25) c h);
+  color: oklch(from var(--pink) calc(l - 0.55) c h);
+  border-bottom-right-radius: 4px;
+}
+
+.msg-row.in .msg-bubble {
+  background-color: #e9e9e9;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  color: #2a2a2a;
+  border-bottom-left-radius: 4px;
+}
+
+/* Delivered / Read receipt under the last outgoing message */
+.msg-receipt {
+  align-self: flex-end;
+  font-family: Helvetica, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #8a8a8a;
+  padding-right: 0.35rem;
+}
+
+/* Typing indicator: three pulsing dots */
+.msg-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 3rem;
+  min-height: 2.1rem;
+  justify-content: center;
+}
+
+.msg-typing span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #8a8a8a;
+  animation: msg-typing-bounce 1.2s infinite ease-in-out;
+}
+
+.msg-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.msg-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes msg-typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* ---------- Composer ---------- */
+.msg-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(244, 244, 244, 0.6));
+}
+
+.msg-input {
+  flex: 1;
+  resize: none;
+  min-height: 2.6rem;
+  max-height: 8rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-family: Helvetica, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #1a1a1a;
+}
+
+.msg-input:focus {
+  outline: 2px solid oklch(from var(--pink) calc(l - 0.15) c h);
+  outline-offset: 1px;
+}
+
+.msg-send-btn {
+  flex-shrink: 0;
+  padding: 0.55rem 1.1rem;
+  background-color: var(--pink);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  border: 1px solid oklch(from var(--pink) calc(l - 0.3) c h);
+  border-radius: 18px;
+  color: oklch(from var(--pink) calc(l - 0.55) c h);
+  font-family: Helvetica, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: scale 0.2s ease-in-out, opacity 0.2s ease-in-out;
+}
+
+.msg-send-btn:hover:not(:disabled) {
+  scale: 1.06;
+}
+
+.msg-send-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---------- States ---------- */
+.msg-status {
+  font-family: Helvetica, sans-serif;
+  font-size: 0.9rem;
+  color: #6a6a6a;
+  padding: 1rem;
+  text-align: center;
+}
+
+.msg-error {
+  font-family: Helvetica, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: oklch(from var(--red) calc(l - 0.45) c h);
+  background-color: oklch(from var(--red) l c h / 0.4);
+  border-top: 1px solid oklch(from var(--red) calc(l - 0.2) c h);
+  padding: 0.5rem 1rem;
+}
+
+.msg-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 2.5rem 1.25rem;
+  text-align: center;
+  font-family: Helvetica, sans-serif;
+  color: #4a4a4a;
+  font-weight: 600;
+}
+
+.msg-empty-hint {
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: #7a7a7a;
+}
+
+.msg-thread-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Helvetica, sans-serif;
+  color: #7a7a7a;
+  font-size: 0.95rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+/* ---------- Mobile: single pane, toggled like an old phone app ---------- */
+@media (max-width: 767px) {
+  .msg-shell {
+    margin: 0.75rem;
+    gap: 0;
+    height: calc(100vh - 96px);
+  }
+
+  .msg-inbox {
+    flex: 1;
+  }
+
+  .msg-thread {
+    display: none;
+  }
+
+  .msg-shell.thread-open .msg-inbox {
+    display: none;
+  }
+
+  .msg-shell.thread-open .msg-thread {
+    display: flex;
+    flex: 1;
+  }
+
+  .msg-back-btn {
+    display: flex;
+  }
+
+  .msg-bubble {
+    max-width: 82%;
+  }
+}
