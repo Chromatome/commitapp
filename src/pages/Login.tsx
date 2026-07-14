@@ -13,9 +13,13 @@ import {
   verifyPhoneOtpAndCreateAccount,
   logInWithPassword,
 } from '../lib/auth';
+import { supabase } from '../lib/supabase';
+import { updateProfile } from '../lib/profileData';
 
 type Mode = 'login' | 'signup';
-type SignupStep = 'details' | 'verify';
+type SignupStep = 'details' | 'verify' | 'username';
+
+const USERNAME_RE = /^[a-zA-Z0-9_-]{3,30}$/;
 
 const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 const isPhone = (value: string) => /^\+?[\d\s\-().]{7,20}$/.test(value.trim());
@@ -56,6 +60,7 @@ const Login: React.FC = () => {
   const [signupStep, setSignupStep] = React.useState<SignupStep>('details');
   const [otpCode, setOtpCode] = React.useState('');
   const [verifiedPhone, setVerifiedPhone] = React.useState<string | null>(null);
+  const [username, setUsername] = React.useState('');
 
   const switchMode = (next: Mode) => {
     setMode(next);
@@ -150,8 +155,9 @@ const Login: React.FC = () => {
           setError(signupError);
           return;
         }
-        setNotice('Account created! Check your email for a confirmation link if required, then log in.');
-        setTimeout(() => navigate(from), 2000);
+        // Account created — now ask the new user to pick a username.
+        setSignupStep('username');
+        setNotice('Account created! Pick a username to finish setting up your profile.');
       }
     } catch {
       setError('Something went wrong creating your account. Please try again.');
@@ -183,10 +189,48 @@ const Login: React.FC = () => {
         return;
       }
 
-      setNotice('Phone verified! Check your email for a confirmation link, then you can use it to log in.');
-      setTimeout(() => navigate(from), 2500);
+      // Phone verified and account created — now ask the new user to pick a username.
+      setSignupStep('username');
+      setNotice('Phone verified! Pick a username to finish setting up your profile.');
     } catch {
       setError('Something went wrong verifying the code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSetUsername = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    const name = username.trim();
+    if (!USERNAME_RE.test(name)) {
+      setError('Username must be 3-30 characters: letters, numbers, hyphens, or underscores.');
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    setLoading(true);
+
+    try {
+      const { data } = await supabase.auth.getUser();
+      const userId = data.user?.id;
+      if (!userId) {
+        // No active session (e.g. email confirmation required) — skip for now.
+        navigate(from);
+        return;
+      }
+      const { error: saveError } = await updateProfile(userId, { username: name });
+      if (saveError) {
+        setError(
+          saveError.toLowerCase().includes('duplicate') || saveError.toLowerCase().includes('unique')
+            ? 'That username is taken — try another one.'
+            : saveError,
+        );
+        return;
+      }
+      navigate(from);
+    } catch {
+      setError('Something went wrong saving your username. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -368,6 +412,44 @@ const Login: React.FC = () => {
                     Log in
                   </button>{' '}
                   with your email or phone number.
+                </p>
+              </form>
+            ) : signupStep === 'username' ? (
+              <form className="login-form" onSubmit={handleSetUsername}>
+                <div className="login-field">
+                  <label htmlFor="username">Username</label>
+                  <input
+                    id="username"
+                    type="text"
+                    autoComplete="username"
+                    maxLength={30}
+                    placeholder="e.g. inkwizard"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
+
+                <p className="login-hint">
+                  This is the name other users will see on your profile and commissions. 3-30
+                  characters: letters, numbers, hyphens, or underscores.
+                </p>
+
+                <div className="login-submit-row">
+                  <Button
+                    label={loading ? 'Saving…' : 'Set Username'}
+                    onClick={() => {}}
+                    type="submit"
+                    disabled={loading}
+                    color="var(--pink)"
+                    style={{ width: '100%' } as React.CSSProperties}
+                  />
+                </div>
+
+                <p className="login-switch">
+                  <button type="button" onClick={() => navigate(from)} disabled={loading}>
+                    Skip for now
+                  </button>{' '}
+                  and keep the automatically generated one.
                 </p>
               </form>
             ) : (
