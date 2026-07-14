@@ -9,6 +9,7 @@ import "../styles/styles.css";
 import Background from '../components/Background';
 import Button from '../components/Button';
 import logo2 from "../assets/commitsticker.png";
+import "../styles/styles.css";
 
 
 const LandingPage: React.FC = () => {
@@ -66,22 +67,29 @@ const LandingPage: React.FC = () => {
 
         {/* Description & Features Section */}
         <section className="features-section">
-          <div className="fs-header">
-            <span><img src={logo2} alt="CommIt Logo" /></span> guarantees secure transactions between artists and art enthusiasts, ensuring creators get paid for their work and buyers safely receive authentic art.
+          <div className="fs-header" ref={aboutRef}>
+              <span><img src={logo2} alt="CommIt Logo" /></span> 
+                is a secure platform for artists and art enthusiasts to connect, collaborate, and transact safely.
           </div>
 
           <div className="fs-subheader">
             No more payment disputes, fake buyers, or AI art. Built for the social media art community, CommIt handles the security so artists and art lovers can safely connect, collaborate, and grow together.
           </div>
 
-          <div className="fs-content" ref={aboutRef}>
-            <h2>About CommIt</h2>
-            <p className="features-description">
-              Welcome to the ultimate solution for your productivity needs. Our platform is designed 
-              to streamline your daily tasks, providing you with the tools necessary to scale your 
-              business effortlessly. Whether you are a solo entrepreneur or a large enterprise, 
-              we have everything you need to succeed.
-            </p>
+          <div className="fs-quotes">
+            <div>“I find it difficult to find people who are willing to commission artists as a smaller artist as people will complain about prices or simply not get commission from you.” </div>
+            <div>Elena Gomez, Digital artist</div>
+          </div>
+
+          <div className="fs-features">
+            <h2>Features</h2>
+            <div>
+              <ul>
+                <li>Reputation System</li>
+                <li>AI Generated Artist Description</li>
+                <li>Easy, customizable listings</ li>
+              </ul>
+            </div>
           
           
           </div>
