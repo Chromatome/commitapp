@@ -1,0 +1,452 @@
+import React, { useState } from 'react';
+import useSWR from 'swr';
+import '../styles/styles.css';
+import '../styles/marketplace.css';
+import '../styles/profile.css';
+import Navbar from '../components/Navbar';
+import Background from '../components/Background';
+import Button from '../components/Button';
+import { useSession } from '../hooks/useSession';
+import {
+  fetchProfilePageData,
+  createCommission,
+  type Commission,
+  type NewCommissionInput,
+  type PaymentType,
+} from '../lib/profileData';
+
+// Same categories used by the marketplace filters.
+const TAG_OPTIONS = ['Digital Art', 'Painting', 'Illustration', 'Sketch', '3D Art'];
+
+const PAYMENT_LABELS: Record<PaymentType, string> = {
+  upfront: 'Upfront',
+  installments: 'Installments Per Phase (Even)',
+  split: 'Split (Upfront % + Rest On Delivery)',
+};
+
+// Map reputation (0-100) to an oklch hue: 25 (red) -> 145 (green).
+const getReputationHue = (rep: number) => 25 + (Math.min(Math.max(rep, 0), 100) / 100) * 120;
+
+// Badge icon slugs seeded in the badges table.
+const BadgeIcon: React.FC<{ icon: string }> = ({ icon }) => {
+  const paths: Record<string, string> = {
+    heart:
+      'M12 21s-7.5-4.9-9.9-9.2C.5 8.9 2.3 5.5 5.6 5.1c1.9-.2 3.6.7 4.6 2.2.5.8 1.1.8 1.6 0 1-1.5 2.7-2.4 4.6-2.2 3.3.4 5.1 3.8 3.5 6.7C19.5 16.1 12 21 12 21z',
+    sparkles:
+      'M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8L12 2zm7 11l.9 2.6L22.5 17l-2.6.9L19 20.5l-.9-2.6L15.5 17l2.6-.9L19 13zM5 14l.7 2L8 16.7l-2 .7L5.3 19l-.7-2-2.3-.7 2-.7L5 14z',
+    trophy:
+      'M6 2h12v2h4v3a5 5 0 01-5 5h-.4A6 6 0 0113 15.9V18h3v2H8v-2h3v-2.1A6 6 0 017.4 12H7a5 5 0 01-5-5V4h4V2zm12 4v4a3 3 0 003-3V6h-3zM6 6H3v1a3 3 0 003 3V6z',
+    shield:
+      'M12 2l8 3v6c0 5.25-3.4 9.74-8 11-4.6-1.26-8-5.75-8-11V5l8-3z',
+    'badge-check':
+      'M12 2l2.4 2.4 3.4-.5.5 3.4L21 9.7l-1.5 3 1.5 3-2.7 2.4-.5 3.4-3.4-.5L12 23l-2.4-2.4-3.4.5-.5-3.4L3 15.3l1.5-3-1.5-3 2.7-2.4.5-3.4 3.4.5L12 2zm-1.2 13.4l5-5-1.4-1.4-3.6 3.6-1.6-1.6-1.4 1.4 3 3z',
+  };
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d={paths[icon] ?? paths['badge-check']} />
+    </svg>
+  );
+};
+
+// Commission card matching the marketplace grid formatting.
+const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) => (
+  <a
+    className="mp-card"
+    href={`/commission?id=${commission.id}`}
+    aria-label={`View details for ${commission.title}`}
+  >
+    <div className="mp-thumb" aria-hidden="true" />
+    <div className="mp-card-meta">
+      <span className="mp-card-title">{commission.title}</span>
+      <span className="mp-card-price">{commission.price.toLocaleString()} Credits</span>
+      <span className="mp-card-artist">
+        {PAYMENT_LABELS[commission.payment_type]}
+        {commission.times_sold > 0 ? ` · Sold ${commission.times_sold}` : ''}
+      </span>
+      {commission.tags.length > 0 && (
+        <span className="mp-card-tags">
+          {commission.tags.map((tag) => (
+            <span className="mp-tag" key={tag}>
+              {tag}
+            </span>
+          ))}
+        </span>
+      )}
+    </div>
+  </a>
+);
+
+// ----- Create commission form (parameters mirror the commission info page) -----
+
+type FormState = {
+  title: string;
+  price: string;
+  paymentType: PaymentType;
+  splitPercent: string;
+  timeTaken: string;
+  phases: string;
+  tags: string[];
+  artistTerms: string;
+};
+
+const INITIAL_FORM: FormState = {
+  title: '',
+  price: '',
+  paymentType: 'upfront',
+  splitPercent: '50',
+  timeTaken: '',
+  phases: 'Sketch, Line Art, Colored, Rendered/Final',
+  tags: [],
+  artistTerms: '',
+};
+
+const CreateCommissionForm: React.FC<{
+  profileId: string;
+  onCreated: () => void;
+}> = ({ profileId, onCreated }) => {
+  const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((f) => ({ ...f, [key]: value }));
+
+  const toggleTag = (tag: string) =>
+    setForm((f) => ({
+      ...f,
+      tags: f.tags.includes(tag) ? f.tags.filter((t) => t !== tag) : [...f.tags, tag],
+    }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setNotice(null);
+
+    const title = form.title.trim();
+    const price = Number(form.price);
+    if (title.length < 1 || title.length > 120) {
+      setError('Title must be between 1 and 120 characters.');
+      return;
+    }
+    if (!Number.isInteger(price) || price < 0) {
+      setError('Price must be a whole number of credits (0 or more).');
+      return;
+    }
+    const splitPercent = Number(form.splitPercent);
+    if (form.paymentType === 'split' && (!Number.isInteger(splitPercent) || splitPercent < 1 || splitPercent > 99)) {
+      setError('Upfront percentage must be a whole number between 1 and 99.');
+      return;
+    }
+
+    const input: NewCommissionInput = {
+      title,
+      price,
+      payment_type: form.paymentType,
+      split_upfront_percent: form.paymentType === 'split' ? splitPercent : null,
+      time_taken: form.timeTaken,
+      tags: form.tags,
+      phases: form.phases
+        .split(',')
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0),
+      artist_terms: form.artistTerms,
+    };
+
+    setSubmitting(true);
+    try {
+      const { error: createError } = await createCommission(profileId, input);
+      if (createError) {
+        setError(createError);
+        return;
+      }
+      setForm(INITIAL_FORM);
+      setNotice('Commission listed! It now appears in your gallery below.');
+      onCreated();
+    } catch {
+      setError('Something went wrong creating the commission. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form className="pf-form" onSubmit={handleSubmit}>
+      <div className="pf-form-grid">
+        <label className="pf-field">
+          <span className="pf-field-label">Title</span>
+          <input
+            type="text"
+            value={form.title}
+            maxLength={120}
+            onChange={(e) => set('title', e.target.value)}
+            placeholder="e.g. Full Body Character Illustration"
+            required
+          />
+        </label>
+
+        <label className="pf-field">
+          <span className="pf-field-label">Price (Credits)</span>
+          <input
+            type="number"
+            min={0}
+            step={1}
+            value={form.price}
+            onChange={(e) => set('price', e.target.value)}
+            placeholder="1000"
+            required
+          />
+        </label>
+
+        <label className="pf-field">
+          <span className="pf-field-label">Payment Type</span>
+          <select
+            value={form.paymentType}
+            onChange={(e) => set('paymentType', e.target.value as PaymentType)}
+          >
+            <option value="upfront">Upfront</option>
+            <option value="installments">Installments Per Phase (Even)</option>
+            <option value="split">Split (Upfront % + Rest On Delivery)</option>
+          </select>
+        </label>
+
+        {form.paymentType === 'split' && (
+          <label className="pf-field">
+            <span className="pf-field-label">Upfront %</span>
+            <input
+              type="number"
+              min={1}
+              max={99}
+              step={1}
+              value={form.splitPercent}
+              onChange={(e) => set('splitPercent', e.target.value)}
+              required
+            />
+          </label>
+        )}
+
+        <label className="pf-field">
+          <span className="pf-field-label">Estimated Time</span>
+          <input
+            type="text"
+            value={form.timeTaken}
+            maxLength={100}
+            onChange={(e) => set('timeTaken', e.target.value)}
+            placeholder="e.g. ~1 month"
+          />
+        </label>
+
+        <label className="pf-field pf-field-wide">
+          <span className="pf-field-label">Phases (comma separated)</span>
+          <input
+            type="text"
+            value={form.phases}
+            onChange={(e) => set('phases', e.target.value)}
+            placeholder="Sketch, Line Art, Colored, Rendered/Final"
+          />
+        </label>
+
+        <fieldset className="pf-field pf-field-wide pf-tags-fieldset">
+          <legend className="pf-field-label">Tags</legend>
+          <div className="pf-tag-options">
+            {TAG_OPTIONS.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                className={`pf-tag-btn${form.tags.includes(tag) ? ' active' : ''}`}
+                aria-pressed={form.tags.includes(tag)}
+                onClick={() => toggleTag(tag)}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <label className="pf-field pf-field-wide">
+          <span className="pf-field-label">Artist Terms</span>
+          <textarea
+            value={form.artistTerms}
+            maxLength={5000}
+            rows={3}
+            onChange={(e) => set('artistTerms', e.target.value)}
+            placeholder="Your custom terms: revisions, usage rights, refunds..."
+          />
+        </label>
+      </div>
+
+      {error && (
+        <p className="pf-form-error" role="alert">
+          {error}
+        </p>
+      )}
+      {notice && <p className="pf-form-notice">{notice}</p>}
+
+      <div className="pf-form-submit">
+        <Button
+          label={submitting ? 'Listing…' : 'List Commission'}
+          onClick={() => {}}
+          type="submit"
+          disabled={submitting}
+          color="var(--pink)"
+        />
+      </div>
+    </form>
+  );
+};
+
+// ----- Page -----
+
+const Profile: React.FC = () => {
+  const { session, checking } = useSession();
+  const userId = session?.user?.id;
+  const [showForm, setShowForm] = useState(false);
+
+  const { data, error, isLoading, mutate } = useSWR(
+    userId ? ['profile-page', userId] : null,
+    () => fetchProfilePageData(userId as string),
+  );
+
+  if (checking) return null;
+
+  const reputation = data?.profile.reputation ?? 50;
+  const repHue = getReputationHue(reputation);
+  // Fall back to email prefix if the profile row hasn't been created yet.
+  const username =
+    data?.profile.username || session?.user?.email?.split('@')[0] || 'Your Profile';
+
+  return (
+    <div className="profile-page">
+      <Background direction="diagonal" speed={0.3} borderColor="rgba(0, 0, 0, 0.05)" />
+
+      <Navbar />
+
+      <div className="pf-body">
+        {/* ---- Header: avatar left, identity right ---- */}
+        <header className="pf-header">
+          <div className="pf-avatar" aria-hidden="true">
+            <svg width="72" height="72" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6v2h16v-2c0-3.33-2.67-6-8-6z" />
+            </svg>
+          </div>
+
+          <div className="pf-identity">
+            <h1 className="pf-username">{username}</h1>
+
+            <ul className="pf-badges" aria-label="Badges">
+              {data && data.badges.length > 0 ? (
+                data.badges.map((badge) => (
+                  <li className="pf-badge" key={badge.slug} title={badge.description}>
+                    <BadgeIcon icon={badge.icon} />
+                    {badge.name}
+                  </li>
+                ))
+              ) : (
+                <li className="pf-badge pf-badge-empty">No badges yet</li>
+              )}
+            </ul>
+
+            <div className="pf-reputation">
+              <span className="pf-rep-label">{reputation}/100 Reputation</span>
+              <div
+                className="pf-rep-bar"
+                role="progressbar"
+                aria-valuenow={reputation}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Reputation"
+              >
+                <div
+                  className="pf-rep-bar-fill"
+                  style={{
+                    width: `${reputation}%`,
+                    backgroundColor: `oklch(0.72 0.17 ${repHue})`,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="pf-header-actions">
+            <Button
+              label={showForm ? 'Close' : 'Create a Commission'}
+              onClick={() => setShowForm((s) => !s)}
+              color="var(--pink)"
+            />
+          </div>
+        </header>
+
+        {/* ---- Create commission (anyone can become an artist) ---- */}
+        {showForm && userId && (
+          <section className="pf-panel" aria-label="Create a commission">
+            <h2 className="pf-panel-title">New Commission</h2>
+            <CreateCommissionForm
+              profileId={userId}
+              onCreated={() => {
+                mutate();
+                setShowForm(false);
+              }}
+            />
+          </section>
+        )}
+
+        {error && (
+          <section className="pf-panel">
+            <p className="pf-error" role="alert">
+              Couldn&apos;t load your profile: {error.message}
+            </p>
+          </section>
+        )}
+
+        {/* ---- Latest reviews on this artist's commissions ---- */}
+        <section className="pf-panel" aria-label="Latest reviews">
+          <h2 className="pf-panel-title">Latest Reviews</h2>
+          {isLoading ? (
+            <p className="pf-muted">Loading reviews…</p>
+          ) : data && data.reviews.length > 0 ? (
+            <div className="pf-review-list">
+              {data.reviews.map((review) => (
+                <article className="pf-review" key={review.id}>
+                  <header className="pf-review-header">
+                    <span className="pf-review-customer">{review.reviewer_name}</span>
+                    {review.reviewer_reputation !== null && (
+                      <span className="pf-review-rep">{review.reviewer_reputation}/100 Rep</span>
+                    )}
+                    <span className="pf-review-comm">on {review.commission_title}</span>
+                    <span className="pf-review-rating">Rating: {review.rating}/5</span>
+                  </header>
+                  {review.text && <p className="pf-review-text">{review.text}</p>}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="pf-muted">
+              No reviews yet — reviews on your listed commissions will show up here.
+            </p>
+          )}
+        </section>
+
+        {/* ---- Commission gallery (marketplace formatting) ---- */}
+        <section className="pf-panel" aria-label="Listed commissions">
+          <h2 className="pf-panel-title">Commissions</h2>
+          {isLoading ? (
+            <p className="pf-muted">Loading commissions…</p>
+          ) : data && data.commissions.length > 0 ? (
+            <div className="mp-grid">
+              {data.commissions.map((c) => (
+                <CommissionCard commission={c} key={c.id} />
+              ))}
+            </div>
+          ) : (
+            <p className="pf-muted">
+              No commissions listed yet. Use &quot;Create a Commission&quot; above to list your
+              first one and become an artist.
+            </p>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+};
+
+export default Profile;

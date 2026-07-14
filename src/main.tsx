@@ -7,6 +7,7 @@ import CommissionInfo from './pages/Commission.tsx'
 import LandingPage from './pages/LandingPage.tsx'
 import Login from './pages/Login.tsx'
 import PurchaseSuccess from './pages/PurchaseSuccess.tsx'
+import Profile from './pages/Profile.tsx'
 import RequireAuth from './components/RequireAuth.tsx'
 
 createRoot(document.getElementById('root')!).render(
@@ -28,6 +29,14 @@ createRoot(document.getElementById('root')!).render(
           element={
             <RequireAuth>
               <CommissionInfo />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth>
+              <Profile />
             </RequireAuth>
           }
         />
