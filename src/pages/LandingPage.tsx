@@ -77,8 +77,10 @@ const LandingPage: React.FC = () => {
           </div>
 
           <div className="fs-quotes">
-            <div>“I find it difficult to find people who are willing to commission artists as a smaller artist as people will complain about prices or simply not get commission from you.” </div>
-            <div>Elena Gomez, Digital artist</div>
+            <div className="fs-quote">
+              <div><i>“I find it difficult to find people who are willing to commission artists as a smaller artist as people will complain about prices or simply not get commission from you.”</i></div>
+              <div>Elena Gomez, Digital artist</div>
+            </div>
           </div>
 
           <div className="fs-features">

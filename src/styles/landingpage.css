@@ -131,6 +131,7 @@
     pointer-events: all;  
     padding: 0 200px;
     padding-bottom: 10rem;
+    gap: 4rem;
 
     @media (max-width: 1024px) {
       padding: 0 40px; 
@@ -173,11 +174,41 @@
 
   .fs-subheader {
     width: 100%;
-    font-size: 1.5rem;
+    font-size: 2rem;
     margin-top: 4rem;
+    text-align: center;
+    color: var(--purple);
+    font-weight: bold;  
 
     @media (max-width: 1024px) {
       font-size: 1rem;
+    }
+  }
+
+  .fs-quotes {
+    display: flex;
+    flex-direction: row;
+  }
+  .fs-quote {
+    display: flex;
+    flex-direction: column;
+    max-width: 300px;
+    border: 1px solid #000;
+
+    --bc-border: oklch(from var(--purple) calc(l - 0.3) c h);
+    --btn-bg: linear-gradient(to bottom, var(--bc-light), var(--bc-dark));
+
+
+
+    & div:nth-child(1) {
+      margin: 1rem;
+      font-size: 1.5rem;
+    }
+
+    & div:nth-child(2) {
+      border-top: 1px solid #000;
+      padding: 0.5rem;
+      font-size: 1.2rem;
     }
   }
 
