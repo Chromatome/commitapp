@@ -10,6 +10,7 @@ import Background from '../components/Background';
 import Button from '../components/Button';
 import logo2 from "../assets/commitsticker.png";
 
+
 const LandingPage: React.FC = () => {
   const aboutRef = React.useRef<HTMLDivElement>(null);
   const { session, checking } = useSession();
@@ -65,6 +66,14 @@ const LandingPage: React.FC = () => {
 
         {/* Description & Features Section */}
         <section className="features-section">
+          <div className="fs-header">
+            <span><img src={logo2} alt="CommIt Logo" /></span> guarantees secure transactions between artists and art enthusiasts, ensuring creators get paid for their work and buyers safely receive authentic art.
+          </div>
+
+          <div className="fs-subheader">
+            No more payment disputes, fake buyers, or AI art. Built for the social media art community, CommIt handles the security so artists and art lovers can safely connect, collaborate, and grow together.
+          </div>
+
           <div className="fs-content" ref={aboutRef}>
             <h2>About CommIt</h2>
             <p className="features-description">
