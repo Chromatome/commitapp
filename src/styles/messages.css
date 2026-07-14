@@ -46,6 +46,7 @@
   margin: 1.25rem 1.5rem 1.5rem;
   min-height: 0;
   height: calc(100vh - 110px);
+  pointer-events: all !important;
 }
 
 .msg-inbox,
@@ -70,9 +71,24 @@
 
 /* ---------- Inbox ---------- */
 .msg-inbox-header {
-  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: row;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(244, 244, 244, 0.6));
+
+  & a {
+    display: block;
+    border-right: 1px solid var(--msg-panel-border);
+    padding: 1rem;
+
+    &:hover {
+      background-color: linear-gradient(180deg, rgba(234, 234, 234, 0.75), rgba(244, 244, 244, 0.6));
+    }
+  }
+
+  & h1 {
+    padding: 1rem;
+  }
 }
 
 .msg-inbox-header h1 {

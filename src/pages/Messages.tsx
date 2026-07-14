@@ -18,6 +18,7 @@ import {
 import { supabase } from '../lib/supabase';
 import '../styles/styles.css';
 import '../styles/messages.css';
+import LinkButton from '../components/LinkButton';
 
 /** "Today 3:41 PM" / "Mon 9:02 AM" / "Jan 5, 2:15 PM" separators, old-SMS style. */
 function formatSeparator(iso: string): string {
@@ -264,12 +265,12 @@ const Messages: React.FC = () => {
   return (
     <div className="messages-page">
       <Background direction="diagonal" speed={0.3} borderColor="rgba(0,0,0,0.06)" squareSize={56} shape="square" />
-      <Navbar />
 
       <main className={`msg-shell ${mobileThreadOpen ? 'thread-open' : ''}`}>
         {/* ---------- Inbox list ---------- */}
         <section className="msg-inbox" aria-label="Conversations">
           <header className="msg-inbox-header">
+            <a href="/">{"<"}</a>
             <h1>Messages</h1>
           </header>
 

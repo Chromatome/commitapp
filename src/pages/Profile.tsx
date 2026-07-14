@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import useSWR from 'swr';
 import '../styles/styles.css';
 import '../styles/marketplace.css';
@@ -359,6 +359,7 @@ const CreateCommissionForm: React.FC<{
 const Profile: React.FC = () => {
   const { session, checking } = useSession();
   const viewerId = session?.user?.id;
+  const navigate = useNavigate();
 
   // /profile shows the signed-in user's own profile; /profile?id={id}
   // shows anyone's. Every mutation below still targets `viewerId` (never
@@ -561,6 +562,16 @@ const Profile: React.FC = () => {
                 label={showForm ? 'Close' : 'Create a Commission'}
                 onClick={() => setShowForm((s) => !s)}
                 color="var(--pink)"
+              />
+            </div>
+          )}
+
+          {!isOwnProfile && viewerId && profileId && (
+            <div className="pf-header-actions">
+              <Button
+                label="Message"
+                onClick={() => navigate(`/messages?with=${profileId}`)}
+                color="var(--gray-bg)"
               />
             </div>
           )}
