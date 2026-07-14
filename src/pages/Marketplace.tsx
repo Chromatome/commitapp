@@ -1,16 +1,22 @@
 import React, { useMemo, useState } from 'react';
+import useSWR from 'swr';
 import '../styles/styles.css';
 import '../styles/marketplace.css';
 import Navbar from '../components/Navbar';
 import Background from '../components/Background';
 import { useMyProfile } from '../hooks/useMyProfile';
+import { fetchMarketplaceListings } from '../lib/profileData';
 
+// A marketplace card. Real listings from the database use their uuid as the
+// id; placeholder listings keep their numeric ids.
 type Commission = {
-  id: number;
+  id: number | string;
   title: string;
   artist: string;
   price: number;
   tags: string[];
+  /** Reputation for real listings comes from the artist's profile row. */
+  reputation?: number;
 };
 
 // Filter categories shown in the sidebar.
@@ -36,7 +42,9 @@ const ARTIST_REPUTATION: Record<string, number> = {
   'Ana Ruiz': 69,
 };
 
-const getReputation = (artist: string) => ARTIST_REPUTATION[artist] ?? 50;
+// Real listings carry their reputation from the database; placeholders fall
+// back to the static map above.
+const getReputation = (c: Commission) => c.reputation ?? ARTIST_REPUTATION[c.artist] ?? 50;
 
 // Map reputation (0-100) to an oklch hue: 25 (red) -> 145 (green).
 const getReputationHue = (rep: number) => 25 + (Math.min(Math.max(rep, 0), 100) / 100) * 120;
@@ -66,19 +74,24 @@ const NEW_ARTISTS: Commission[] = [
   { id: 15, title: 'Watercolor Pet', artist: 'Ana Ruiz', price: 18, tags: ['Painting'] },
 ];
 
-const ALL_COMMISSIONS = [...PROMOTED, ...RECOMMENDED, ...NEW_ARTISTS];
+const PLACEHOLDER_COMMISSIONS = [...PROMOTED, ...RECOMMENDED, ...NEW_ARTISTS];
 
-// Price filter bounds derived from the catalog.
+// Price filter floor; the max is derived from the full catalog at render time.
 const PRICE_MIN = 0;
-const PRICE_MAX = Math.max(...ALL_COMMISSIONS.map((c) => c.price));
 
 // Varied aspect ratios (width / height) to showcase different thumbnail
 // resolutions. Deterministic per commission id so cards keep their shape.
 const THUMB_RATIOS = [1, 4 / 3, 3 / 4, 16 / 9, 2 / 3, 3 / 2];
 const THUMB_HEIGHT = 170;
 
-const getThumbWidth = (id: number) =>
-  Math.round(THUMB_HEIGHT * THUMB_RATIOS[id % THUMB_RATIOS.length]);
+// Deterministic numeric seed for both numeric placeholder ids and uuid strings.
+const idSeed = (id: number | string) =>
+  typeof id === 'number'
+    ? id
+    : Array.from(id).reduce((acc, ch) => (acc + ch.charCodeAt(0)) % 997, 0);
+
+const getThumbWidth = (id: number | string) =>
+  Math.round(THUMB_HEIGHT * THUMB_RATIOS[idSeed(id) % THUMB_RATIOS.length]);
 
 const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) => (
   <a
@@ -97,15 +110,15 @@ const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) =>
           className="mp-card-rep"
           style={
             {
-              '--rep-hue': getReputationHue(getReputation(commission.artist)),
+              '--rep-hue': getReputationHue(getReputation(commission)),
             } as React.CSSProperties
           }
-          title={`Artist reputation: ${getReputation(commission.artist)}/100`}
+          title={`Artist reputation: ${getReputation(commission)}/100`}
         >
           <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 2l2.9 6.26L21.5 9.3l-4.75 4.4 1.15 6.8L12 17.2l-5.9 3.3 1.15-6.8L2.5 9.3l6.6-1.04L12 2z" />
           </svg>
-          {getReputation(commission.artist)}
+          {getReputation(commission)}
         </span>
       </span>
       <span className="mp-card-price">${commission.price}</span>
@@ -133,12 +146,43 @@ const Section: React.FC<{ title: string; commissions: Commission[] }> = ({ title
 
 const MarketPlace: React.FC = () => {
   const { profile } = useMyProfile();
+
+  // Real commission listings from the database, blended with the placeholders.
+  const { data: dbListings } = useSWR('marketplace-listings', fetchMarketplaceListings);
+
+  const latestListings = useMemo<Commission[]>(
+    () =>
+      (dbListings ?? []).map((l) => ({
+        id: l.id,
+        title: l.title,
+        artist: l.artist_name,
+        price: l.price,
+        tags: l.tags,
+        reputation: l.artist_reputation,
+      })),
+    [dbListings],
+  );
+
+  // Full catalog: real listings first, then the placeholder sections.
+  const allCommissions = useMemo(
+    () => [...latestListings, ...PLACEHOLDER_COMMISSIONS],
+    [latestListings],
+  );
+
+  const priceCeiling = useMemo(
+    () => Math.max(...allCommissions.map((c) => c.price)),
+    [allCommissions],
+  );
+
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState('');
   const [query, setQuery] = useState('');
   const [priceMin, setPriceMin] = useState(PRICE_MIN);
-  const [priceMax, setPriceMax] = useState(PRICE_MAX);
+  const [priceMax, setPriceMax] = useState<number | null>(null);
   const [minReputation, setMinReputation] = useState(0);
+
+  // Until the user narrows it, the max tracks the (possibly still loading) catalog.
+  const effectivePriceMax = priceMax ?? priceCeiling;
 
   const toggleFilter = (filter: string) => {
     setActiveFilters((prev) =>
@@ -151,7 +195,7 @@ const MarketPlace: React.FC = () => {
     setSearchInput('');
     setQuery('');
     setPriceMin(PRICE_MIN);
-    setPriceMax(PRICE_MAX);
+    setPriceMax(null);
     setMinReputation(0);
   };
 
@@ -160,25 +204,25 @@ const MarketPlace: React.FC = () => {
     setQuery(searchInput.trim());
   };
 
-  const isPriceFiltered = priceMin > PRICE_MIN || priceMax < PRICE_MAX;
+  const isPriceFiltered = priceMin > PRICE_MIN || (priceMax !== null && priceMax < priceCeiling);
   const isFiltering =
     activeFilters.length > 0 || query.length > 0 || isPriceFiltered || minReputation > 0;
 
   // Relevant commissions matching the applied filters and/or artist/title search.
   const results = useMemo(() => {
     const q = query.toLowerCase();
-    return ALL_COMMISSIONS.filter((c) => {
+    return allCommissions.filter((c) => {
       const matchesFilters =
         activeFilters.length === 0 || activeFilters.some((f) => c.tags.includes(f));
       const matchesQuery =
         q.length === 0 ||
         c.artist.toLowerCase().includes(q) ||
         c.title.toLowerCase().includes(q);
-      const matchesPrice = c.price >= priceMin && c.price <= priceMax;
-      const matchesReputation = getReputation(c.artist) >= minReputation;
+      const matchesPrice = c.price >= priceMin && c.price <= effectivePriceMax;
+      const matchesReputation = getReputation(c) >= minReputation;
       return matchesFilters && matchesQuery && matchesPrice && matchesReputation;
     });
-  }, [activeFilters, query, priceMin, priceMax, minReputation]);
+  }, [allCommissions, activeFilters, query, priceMin, effectivePriceMax, minReputation]);
 
   return (
     <div className="marketplace-page">
@@ -235,10 +279,12 @@ const MarketPlace: React.FC = () => {
                 <input
                   type="number"
                   min={PRICE_MIN}
-                  max={priceMax}
+                  max={effectivePriceMax}
                   value={priceMin}
                   onChange={(e) =>
-                    setPriceMin(Math.max(PRICE_MIN, Math.min(Number(e.target.value) || 0, priceMax)))
+                    setPriceMin(
+                      Math.max(PRICE_MIN, Math.min(Number(e.target.value) || 0, effectivePriceMax)),
+                    )
                   }
                   aria-label="Minimum price"
                 />
@@ -252,10 +298,10 @@ const MarketPlace: React.FC = () => {
                 <input
                   type="number"
                   min={priceMin}
-                  max={PRICE_MAX}
-                  value={priceMax}
+                  max={priceCeiling}
+                  value={effectivePriceMax}
                   onChange={(e) =>
-                    setPriceMax(Math.min(PRICE_MAX, Math.max(Number(e.target.value) || 0, priceMin)))
+                    setPriceMax(Math.min(priceCeiling, Math.max(Number(e.target.value) || 0, priceMin)))
                   }
                   aria-label="Maximum price"
                 />
@@ -326,6 +372,9 @@ const MarketPlace: React.FC = () => {
             </section>
           ) : (
             <>
+              {latestListings.length > 0 && (
+                <Section title="Latest Listings" commissions={latestListings} />
+              )}
               <Section title="Promoted" commissions={PROMOTED} />
               <Section title="Recommended" commissions={RECOMMENDED} />
               <Section title="New Artists" commissions={NEW_ARTISTS} />

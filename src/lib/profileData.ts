@@ -113,6 +113,47 @@ export async function fetchProfilePageData(userId: string): Promise<ProfilePageD
   return { profile: profileRes.data as Profile, badges, commissions, reviews };
 }
 
+/** A commission listing joined with its artist's public profile, for marketplace browsing. */
+export type MarketplaceListing = {
+  id: string;
+  title: string;
+  price: number;
+  tags: string[];
+  created_at: string;
+  artist_name: string;
+  artist_reputation: number;
+};
+
+/** Fetch all commission listings (newest first) with artist name + reputation for the marketplace. */
+export async function fetchMarketplaceListings(): Promise<MarketplaceListing[]> {
+  const { data, error } = await supabase
+    .from('commissions')
+    .select('id, title, price, tags, created_at, profiles(username, reputation)')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row) => {
+    const joined = row as unknown as {
+      id: string;
+      title: string;
+      price: number;
+      tags: unknown;
+      created_at: string;
+      profiles: { username: string; reputation: number } | null;
+    };
+    return {
+      id: joined.id,
+      title: joined.title,
+      price: Number(joined.price),
+      tags: Array.isArray(joined.tags) ? (joined.tags as string[]) : [],
+      created_at: joined.created_at,
+      artist_name: joined.profiles?.username ?? 'Unknown Artist',
+      artist_reputation: joined.profiles?.reputation ?? 50,
+    };
+  });
+}
+
 export type NewCommissionInput = {
   title: string;
   price: number;
