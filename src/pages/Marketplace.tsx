@@ -4,22 +4,9 @@ import '../styles/styles.css';
 import '../styles/marketplace.css';
 import Navbar from '../components/Navbar';
 import Background from '../components/Background';
+import { CommissionCard, type Commission } from '../components/CommissionCard';
 import { useMyProfile } from '../hooks/useMyProfile';
 import { fetchMarketplaceListings } from '../lib/profileData';
-
-// A marketplace card. Real listings from the database use their uuid as the
-// id; placeholder listings keep their numeric ids.
-type Commission = {
-  id: number | string;
-  title: string;
-  artist: string;
-  price: number;
-  tags: string[];
-  /** Reputation for real listings comes from the artist's profile row. */
-  reputation?: number;
-  /** Uploaded thumbnail for real listings; placeholders have none. */
-  thumbnailUrl?: string | null;
-};
 
 // Filter categories shown in the sidebar.
 const FILTERS = ['Digital Art', 'Painting', 'Illustration', 'Sketch', '3D Art'];
@@ -44,101 +31,40 @@ const ARTIST_REPUTATION: Record<string, number> = {
   'Ana Ruiz': 69,
 };
 
-// Real listings carry their reputation from the database; placeholders fall
-// back to the static map above.
-const getReputation = (c: Commission) => c.reputation ?? ARTIST_REPUTATION[c.artist] ?? 50;
-
-// Map reputation (0-100) to an oklch hue: 25 (red) -> 145 (green).
-const getReputationHue = (rep: number) => 25 + (Math.min(Math.max(rep, 0), 100) / 100) * 120;
+// Attaches each placeholder's reputation from the static map above, so the
+// shared CommissionCard only ever needs to read `commission.reputation`.
+const withReputation = (commissions: Omit<Commission, 'reputation'>[]): Commission[] =>
+  commissions.map((c) => ({ ...c, reputation: ARTIST_REPUTATION[c.artist] ?? 50 }));
 
 // Placeholder commissions grouped by browse section.
-const PROMOTED: Commission[] = [
+const PROMOTED: Commission[] = withReputation([
   { id: 1, title: 'Neon Portrait', artist: 'Aria Vale', price: 85, tags: ['Digital Art', 'Illustration'] },
   { id: 2, title: 'Sunset Study', artist: 'Milo Chen', price: 40, tags: ['Painting'] },
   { id: 3, title: 'Cyber Cat', artist: 'Rin Okada', price: 120, tags: ['Digital Art', '3D Art'] },
   { id: 4, title: 'Ink Dragon', artist: 'Kofi Mensah', price: 150, tags: ['Sketch', 'Illustration'] },
   { id: 5, title: 'Dream Field', artist: 'Lena Ford', price: 60, tags: ['Painting', 'Digital Art'] },
-];
+]);
 
-const RECOMMENDED: Commission[] = [
+const RECOMMENDED: Commission[] = withReputation([
   { id: 6, title: 'Chibi Duo', artist: 'Sora Kim', price: 35, tags: ['Illustration', 'Digital Art'] },
   { id: 7, title: 'Forest Spirit', artist: 'Nia Blake', price: 55, tags: ['Painting'] },
   { id: 8, title: 'Mecha Sketch', artist: 'Dev Rao', price: 25, tags: ['Sketch', '3D Art'] },
   { id: 9, title: 'Pastel Girl', artist: 'Yuki Sato', price: 48, tags: ['Digital Art'] },
   { id: 10, title: 'Old Harbor', artist: 'Tom Reed', price: 70, tags: ['Painting', 'Illustration'] },
-];
+]);
 
-const NEW_ARTISTS: Commission[] = [
+const NEW_ARTISTS: Commission[] = withReputation([
   { id: 11, title: 'Doodle Pack', artist: 'Max Wu', price: 3, tags: ['Sketch'] },
   { id: 12, title: 'Fantasy Icon', artist: 'Ivy Long', price: 12, tags: ['Digital Art', 'Illustration'] },
   { id: 13, title: 'Quick Bust', artist: 'Sam Diaz', price: 5, tags: ['Sketch', 'Painting'] },
   { id: 14, title: 'Voxel Hero', artist: 'Ben Cole', price: 8, tags: ['3D Art'] },
   { id: 15, title: 'Watercolor Pet', artist: 'Ana Ruiz', price: 18, tags: ['Painting'] },
-];
+]);
 
 const PLACEHOLDER_COMMISSIONS = [...PROMOTED, ...RECOMMENDED, ...NEW_ARTISTS];
 
 // Price filter floor; the max is derived from the full catalog at render time.
 const PRICE_MIN = 0;
-
-// Varied aspect ratios (width / height) to showcase different thumbnail
-// resolutions. Deterministic per commission id so cards keep their shape.
-const THUMB_RATIOS = [1, 4 / 3, 3 / 4, 16 / 9, 2 / 3, 3 / 2];
-const THUMB_HEIGHT = 170;
-
-// Deterministic numeric seed for both numeric placeholder ids and uuid strings.
-const idSeed = (id: number | string) =>
-  typeof id === 'number'
-    ? id
-    : Array.from(id).reduce((acc, ch) => (acc + ch.charCodeAt(0)) % 997, 0);
-
-const getThumbWidth = (id: number | string) =>
-  Math.round(THUMB_HEIGHT * THUMB_RATIOS[idSeed(id) % THUMB_RATIOS.length]);
-
-export const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) => (
-  <a
-    className="mp-card"
-    href={`/commission?id=${commission.id}`}
-    style={{ '--thumb-width': `${getThumbWidth(commission.id)}px` } as React.CSSProperties}
-    aria-label={`View details for ${commission.title} by ${commission.artist}`}
-  >
-    {/* Thumbnail — real upload if the artist added one, otherwise a colored
-        placeholder whose dimensions vary to simulate different resolutions */}
-    <div className="mp-thumb" aria-hidden="true">
-      {commission.thumbnailUrl && (
-        <img src={commission.thumbnailUrl} alt="" className="mp-thumb-img" />
-      )}
-    </div>
-    <div className="mp-card-meta">
-      <span className="mp-card-title">{commission.title}</span>
-      <span className="mp-card-artist">
-        {commission.artist}
-        <span
-          className="mp-card-rep"
-          style={
-            {
-              '--rep-hue': getReputationHue(getReputation(commission)),
-            } as React.CSSProperties
-          }
-          title={`Artist reputation: ${getReputation(commission)}/100`}
-        >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 2l2.9 6.26L21.5 9.3l-4.75 4.4 1.15 6.8L12 17.2l-5.9 3.3 1.15-6.8L2.5 9.3l6.6-1.04L12 2z" />
-          </svg>
-          {getReputation(commission)}
-        </span>
-      </span>
-      <span className="mp-card-price">${commission.price}</span>
-      <span className="mp-card-tags">
-        {commission.tags.map((tag) => (
-          <span className="mp-tag" key={tag}>
-            {tag}
-          </span>
-        ))}
-      </span>
-    </div>
-  </a>
-);
 
 const Section: React.FC<{ title: string; commissions: Commission[] }> = ({ title, commissions }) => (
   <section className="mp-section">
@@ -227,7 +153,7 @@ const MarketPlace: React.FC = () => {
         c.artist.toLowerCase().includes(q) ||
         c.title.toLowerCase().includes(q);
       const matchesPrice = c.price >= priceMin && c.price <= effectivePriceMax;
-      const matchesReputation = getReputation(c) >= minReputation;
+      const matchesReputation = (c.reputation ?? 50) >= minReputation;
       return matchesFilters && matchesQuery && matchesPrice && matchesReputation;
     });
   }, [allCommissions, activeFilters, query, priceMin, effectivePriceMax, minReputation]);

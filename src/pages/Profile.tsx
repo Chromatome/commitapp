@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import useSWR from 'swr';
 import '../styles/styles.css';
 import '../styles/marketplace.css';
@@ -6,6 +7,7 @@ import '../styles/profile.css';
 import Navbar from '../components/Navbar';
 import Background from '../components/Background';
 import Button from '../components/Button';
+import { CommissionCard, type Commission as ListingCommission } from '../components/CommissionCard';
 import { useSession } from '../hooks/useSession';
 import { useMyProfile } from '../hooks/useMyProfile';
 import {
@@ -14,19 +16,12 @@ import {
   updateProfile,
   uploadAvatar,
   uploadCommissionThumbnail,
-  type Commission,
   type NewCommissionInput,
   type PaymentType,
 } from '../lib/profileData';
 
 // Same categories used by the marketplace filters.
 const TAG_OPTIONS = ['Digital Art', 'Painting', 'Illustration', 'Sketch', '3D Art'];
-
-const PAYMENT_LABELS: Record<PaymentType, string> = {
-  upfront: 'Upfront',
-  installments: 'Installments Per Phase (Even)',
-  split: 'Split (Upfront % + Rest On Delivery)',
-};
 
 // Map reputation (0-100) to an oklch hue: 25 (red) -> 145 (green).
 const getReputationHue = (rep: number) => 25 + (Math.min(Math.max(rep, 0), 100) / 100) * 120;
@@ -51,38 +46,6 @@ const BadgeIcon: React.FC<{ icon: string }> = ({ icon }) => {
     </svg>
   );
 };
-
-// Commission card matching the marketplace grid formatting.
-const CommissionCard: React.FC<{ commission: Commission }> = ({ commission }) => (
-  <a
-    className="mp-card"
-    href={`/commission?id=${commission.id}`}
-    aria-label={`View details for ${commission.title}`}
-  >
-    <div className="mp-thumb" aria-hidden="true">
-      {commission.thumbnail_url && (
-        <img src={commission.thumbnail_url} alt="" className="mp-thumb-img" />
-      )}
-    </div>
-    <div className="mp-card-meta">
-      <span className="mp-card-title">{commission.title}</span>
-      <span className="mp-card-price">{commission.price.toLocaleString()} Credits</span>
-      <span className="mp-card-artist">
-        {PAYMENT_LABELS[commission.payment_type]}
-        {commission.times_sold > 0 ? ` · Sold ${commission.times_sold}` : ''}
-      </span>
-      {commission.tags.length > 0 && (
-        <span className="mp-card-tags">
-          {commission.tags.map((tag) => (
-            <span className="mp-tag" key={tag}>
-              {tag}
-            </span>
-          ))}
-        </span>
-      )}
-    </div>
-  </a>
-);
 
 // ----- Create commission form (parameters mirror the commission info page) -----
 
@@ -395,7 +358,16 @@ const CreateCommissionForm: React.FC<{
 
 const Profile: React.FC = () => {
   const { session, checking } = useSession();
-  const userId = session?.user?.id;
+  const viewerId = session?.user?.id;
+
+  // /profile shows the signed-in user's own profile; /profile?id={id}
+  // shows anyone's. Every mutation below still targets `viewerId` (never
+  // the id from the URL), so a visitor can only ever act as themselves.
+  const [searchParams] = useSearchParams();
+  const requestedId = searchParams.get('id');
+  const profileId = requestedId || viewerId;
+  const isOwnProfile = Boolean(viewerId) && profileId === viewerId;
+
   const [showForm, setShowForm] = useState(false);
 
   // Avatar upload state
@@ -411,24 +383,42 @@ const Profile: React.FC = () => {
   const [aboutError, setAboutError] = useState<string | null>(null);
 
   const { data, error, isLoading, mutate } = useSWR(
-    userId ? ['profile-page', userId] : null,
-    () => fetchProfilePageData(userId as string),
+    profileId ? ['profile-page', profileId] : null,
+    () => fetchProfilePageData(profileId as string),
   );
 
   if (checking) return null;
 
+  if (!profileId) {
+    return (
+      <div className="profile-page">
+        <Background direction="diagonal" speed={0.3} borderColor="rgba(0, 0, 0, 0.05)" />
+        <Navbar />
+        <div className="pf-body">
+          <section className="pf-panel">
+            <p className="pf-error" role="alert">
+              No profile specified.
+            </p>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
   const reputation = data?.profile.reputation ?? 50;
   const repHue = getReputationHue(reputation);
-  // Fall back to email prefix if the profile row hasn't been created yet.
+  // Fall back to email prefix only for the viewer's own not-yet-created row.
   const username =
-    data?.profile.username || session?.user?.email?.split('@')[0] || 'Your Profile';
+    data?.profile.username ||
+    (isOwnProfile ? session?.user?.email?.split('@')[0] : null) ||
+    'Unnamed Artist';
   const avatarUrl = data?.profile.avatar_url ?? null;
   const aboutMe = data?.profile.about_me ?? '';
 
   const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || !userId) return;
+    if (!file || !viewerId || !isOwnProfile) return;
     if (!file.type.startsWith('image/')) {
       setAvatarError('Please choose an image file (PNG, JPG, WebP, or GIF).');
       return;
@@ -440,7 +430,7 @@ const Profile: React.FC = () => {
     setAvatarError(null);
     setUploading(true);
     try {
-      const { error: uploadError } = await uploadAvatar(userId, file);
+      const { error: uploadError } = await uploadAvatar(viewerId, file);
       if (uploadError) {
         setAvatarError(uploadError);
         return;
@@ -456,17 +446,18 @@ const Profile: React.FC = () => {
   };
 
   const startEditingAbout = () => {
+    if (!isOwnProfile) return;
     setAboutDraft(aboutMe);
     setAboutError(null);
     setEditingAbout(true);
   };
 
   const saveAbout = async () => {
-    if (!userId) return;
+    if (!viewerId || !isOwnProfile) return;
     setSavingAbout(true);
     setAboutError(null);
     try {
-      const { error: saveError } = await updateProfile(userId, { about_me: aboutDraft.trim() });
+      const { error: saveError } = await updateProfile(viewerId, { about_me: aboutDraft.trim() });
       if (saveError) {
         setAboutError(saveError);
         return;
@@ -500,26 +491,30 @@ const Profile: React.FC = () => {
                 </svg>
               )}
             </div>
-            <button
-              type="button"
-              className="pf-avatar-edit"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-            >
-              {uploading ? 'Uploading…' : 'Change'}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              className="sr-only"
-              aria-label="Upload a new profile picture"
-              onChange={handleAvatarFile}
-            />
-            {avatarError && (
-              <p className="pf-form-error pf-avatar-error" role="alert">
-                {avatarError}
-              </p>
+            {isOwnProfile && (
+              <>
+                <button
+                  type="button"
+                  className="pf-avatar-edit"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Uploading…' : 'Change'}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="sr-only"
+                  aria-label="Upload a new profile picture"
+                  onChange={handleAvatarFile}
+                />
+                {avatarError && (
+                  <p className="pf-form-error pf-avatar-error" role="alert">
+                    {avatarError}
+                  </p>
+                )}
+              </>
             )}
           </div>
 
@@ -560,20 +555,22 @@ const Profile: React.FC = () => {
             </div>
           </div>
 
-          <div className="pf-header-actions">
-            <Button
-              label={showForm ? 'Close' : 'Create a Commission'}
-              onClick={() => setShowForm((s) => !s)}
-              color="var(--pink)"
-            />
-          </div>
+          {isOwnProfile && (
+            <div className="pf-header-actions">
+              <Button
+                label={showForm ? 'Close' : 'Create a Commission'}
+                onClick={() => setShowForm((s) => !s)}
+                color="var(--pink)"
+              />
+            </div>
+          )}
         </header>
 
         {/* ---- About me ---- */}
         <section className="pf-panel" aria-label="About me">
           <div className="pf-panel-header">
             <h2 className="pf-panel-title">About Me</h2>
-            {!editingAbout && (
+            {isOwnProfile && !editingAbout && (
               <button type="button" className="pf-edit-btn" onClick={startEditingAbout}>
                 Edit
               </button>
@@ -613,17 +610,19 @@ const Profile: React.FC = () => {
             <p className="pf-about-text">{aboutMe}</p>
           ) : (
             <p className="pf-muted">
-              Nothing here yet — use Edit to tell people about yourself and your art.
+              {isOwnProfile
+                ? 'Nothing here yet — use Edit to tell people about yourself and your art.'
+                : 'Nothing here yet.'}
             </p>
           )}
         </section>
 
-        {/* ---- Create commission (anyone can become an artist) ---- */}
-        {showForm && userId && (
+        {/* ---- Create commission (anyone can become an artist, only on your own profile) ---- */}
+        {isOwnProfile && showForm && viewerId && (
           <section className="pf-panel" aria-label="Create a commission">
             <h2 className="pf-panel-title">New Commission</h2>
             <CreateCommissionForm
-              profileId={userId}
+              profileId={viewerId}
               onCreated={() => {
                 mutate();
                 setShowForm(false);
@@ -635,7 +634,7 @@ const Profile: React.FC = () => {
         {error && (
           <section className="pf-panel">
             <p className="pf-error" role="alert">
-              Couldn&apos;t load your profile: {error.message}
+              Couldn&apos;t load this profile: {error.message}
             </p>
           </section>
         )}
@@ -663,7 +662,9 @@ const Profile: React.FC = () => {
             </div>
           ) : (
             <p className="pf-muted">
-              No reviews yet — reviews on your listed commissions will show up here.
+              {isOwnProfile
+                ? 'No reviews yet — reviews on your listed commissions will show up here.'
+                : 'No reviews yet.'}
             </p>
           )}
         </section>
@@ -675,14 +676,24 @@ const Profile: React.FC = () => {
             <p className="pf-muted">Loading commissions…</p>
           ) : data && data.commissions.length > 0 ? (
             <div className="mp-grid">
-              {data.commissions.map((c) => (
-                <CommissionCard commission={c} key={c.id} />
-              ))}
+              {data.commissions.map((c) => {
+                const listing: ListingCommission = {
+                  id: c.id,
+                  title: c.title,
+                  artist: username,
+                  price: c.price,
+                  tags: c.tags,
+                  reputation,
+                  thumbnailUrl: c.thumbnail_url,
+                };
+                return <CommissionCard commission={listing} key={c.id} />;
+              })}
             </div>
           ) : (
             <p className="pf-muted">
-              No commissions listed yet. Use &quot;Create a Commission&quot; above to list your
-              first one and become an artist.
+              {isOwnProfile
+                ? 'No commissions listed yet. Use "Create a Commission" above to list your first one and become an artist.'
+                : 'No commissions listed yet.'}
             </p>
           )}
         </section>
