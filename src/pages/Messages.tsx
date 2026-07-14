@@ -18,7 +18,6 @@ import {
 import { supabase } from '../lib/supabase';
 import '../styles/styles.css';
 import '../styles/messages.css';
-import LinkButton from '../components/LinkButton';
 
 /** "Today 3:41 PM" / "Mon 9:02 AM" / "Jan 5, 2:15 PM" separators, old-SMS style. */
 function formatSeparator(iso: string): string {
