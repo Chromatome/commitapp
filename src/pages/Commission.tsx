@@ -1,71 +1,25 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 import '../styles/styles.css';
 import '../styles/commissioninfo.css';
 import Navbar from '../components/Navbar';
 import Background from '../components/Background';
 import Button from '../components/Button';
 import LinkButton from '../components/LinkButton';
+import {
+  fetchCommissionInfo,
+  type CommissionInfoData,
+  type PaymentType,
+} from '../lib/profileData';
 
-type Review = {
-  id: number;
-  customer: string;
-  rating: number; // out of 5
-  reputation: number; // out of 100
-  text: string;
+// Number of carousel slides (placeholder previews until commission galleries exist).
+const CAROUSEL_SLIDES = 4;
+
+const PAYMENT_TYPE_LABELS: Record<PaymentType, string> = {
+  upfront: 'Full Payment Upfront',
+  installments: 'Installments Per Phase (Even)',
+  split: 'Split Payment',
 };
-
-// Placeholder commission data — these would come from the selected marketplace listing.
-const COMMISSION = {
-  title: 'Comm Title',
-  priceCredits: '1,000.00',
-  images: 4, // number of carousel slides (placeholders)
-  artist: {
-    name: 'Artist Name',
-    reputation: 89,
-    review: "This artist is known for their exceptional attention to detail and timely delivery.",
-  },
-  description: {
-    paymentType: 'Installments Per Phase (Even)',
-    time: '~1 month',
-    phases: 'Sketch, Line Art, Colored, Rendered/Final',
-    sold: 67,
-    avgSatisfaction: '5/5',
-    totalUsdAfterFee: '$1,010.70',
-    pricePerPhase: '$252.56 + Tax',
-    artistTerms: 'Lorem Ipsum Dolor It ... Artist Custom Terms',
-  },
-};
-
-const REVIEWS: Review[] = [
-  {
-    id: 1,
-    customer: 'PlaceholderCustomer',
-    rating: 5,
-    reputation: 92,
-    text: 'The artist was responsive and I was satisfied with my product! Would 100% recommend.',
-  },
-  {
-    id: 2,
-    customer: 'PlaceholderCustomer',
-    rating: 5,
-    reputation: 78,
-    text: 'The artist was responsive and I was satisfied with my product! Would 100% recommend.',
-  },
-  {
-    id: 3,
-    customer: 'PixelPatron',
-    rating: 4,
-    reputation: 64,
-    text: 'Great communication throughout the phases. Delivery took a little longer than expected but the final piece was worth it.',
-  },
-  {
-    id: 4,
-    customer: 'CanvasCollector',
-    rating: 3,
-    reputation: 45,
-    text: 'Solid work overall. A few revisions were needed but the artist handled them professionally.',
-  },
-];
 
 // Reusable person avatar placeholder.
 const Avatar: React.FC<{ size?: number; className?: string }> = ({ size = 40, className }) => (
@@ -79,22 +33,63 @@ const Avatar: React.FC<{ size?: number; className?: string }> = ({ size = 40, cl
 type ReviewSort = 'recent' | 'highest' | 'lowest' | 'reputation';
 
 const CommissionInfo: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const commissionId = searchParams.get('id');
+
+  const [data, setData] = useState<CommissionInfoData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const [activeSlide, setActiveSlide] = useState(0);
   const [reviewSearch, setReviewSearch] = useState('');
   const [minRating, setMinRating] = useState(0);
   const [sort, setSort] = useState<ReviewSort>('recent');
 
-  const nextSlide = () => setActiveSlide((s) => (s + 1) % COMMISSION.images);
-  const prevSlide = () => setActiveSlide((s) => (s - 1 + COMMISSION.images) % COMMISSION.images);
+  useEffect(() => {
+    if (!commissionId) {
+      setLoading(false);
+      setLoadError('No commission selected. Browse the marketplace to pick one.');
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+
+    fetchCommissionInfo(commissionId)
+      .then((info) => {
+        if (cancelled) return;
+        if (!info) {
+          setLoadError('This commission could not be found. It may have been removed.');
+        } else {
+          setData(info);
+          setLoadError(null);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLoadError('Something went wrong loading this commission. Try refreshing.');
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [commissionId]);
+
+  const nextSlide = () => setActiveSlide((s) => (s + 1) % CAROUSEL_SLIDES);
+  const prevSlide = () => setActiveSlide((s) => (s - 1 + CAROUSEL_SLIDES) % CAROUSEL_SLIDES);
+
+  const reviews = data?.reviews ?? [];
 
   // Filter + sort reviews based on the review search controls.
   const filteredReviews = useMemo(() => {
     const q = reviewSearch.trim().toLowerCase();
-    const list = REVIEWS.filter((r) => {
+    const list = reviews.filter((r) => {
       const matchesQuery =
         q.length === 0 ||
-        r.customer.toLowerCase().includes(q) ||
-        r.text.toLowerCase().includes(q);
+        r.reviewer_name.toLowerCase().includes(q) ||
+        (r.text ?? '').toLowerCase().includes(q);
       const matchesRating = r.rating >= minRating;
       return matchesQuery && matchesRating;
     });
@@ -108,13 +103,47 @@ const CommissionInfo: React.FC = () => {
         sorted.sort((a, b) => a.rating - b.rating);
         break;
       case 'reputation':
-        sorted.sort((a, b) => b.reputation - a.reputation);
+        sorted.sort((a, b) => (b.reviewer_reputation ?? 0) - (a.reviewer_reputation ?? 0));
         break;
       default:
-        break; // 'recent' keeps original order
+        break; // 'recent' keeps newest-first order from the query
     }
     return sorted;
-  }, [reviewSearch, minRating, sort]);
+  }, [reviews, reviewSearch, minRating, sort]);
+
+  const avgSatisfaction =
+    reviews.length > 0
+      ? `${(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}/5`
+      : 'No ratings yet';
+
+  if (loading || loadError) {
+    return (
+      <div className="commission-page">
+        <Background direction="diagonal" speed={0.3} borderColor="rgba(0, 0, 0, 0.05)" />
+        <Navbar />
+        <div className="ci-body">
+          <p className="ci-page-status">{loading ? 'Loading commission…' : loadError}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+  const { commission, artist } = data;
+  const priceCredits = Number(commission.price).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  // Rough USD estimate after the platform fee (credits are 1:1 with USD pre-fee).
+  const totalUsdAfterFee = `$${(Number(commission.price) * 1.0107).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+  const phaseCount = Math.max(commission.phases.length, 1);
+  const pricePerPhase = `$${((Number(commission.price) * 1.0107) / phaseCount).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} + Tax`;
 
   return (
     <div className="commission-page">
@@ -126,27 +155,44 @@ const CommissionInfo: React.FC = () => {
 
       {/* Header (matches marketplace) */}
       <Navbar />
-      
+
 
       {/* Body */}
       <div className="ci-body">
         {/* Left column: showcase + purchase */}
         <div className="ci-left">
           <div className="ci-purchase-card">
-            <h1 className="ci-comm-title">{COMMISSION.title}</h1>
-            <p className="ci-comm-price">{COMMISSION.priceCredits} Credits + Fee</p>
+            <h1 className="ci-comm-title">{commission.title}</h1>
+            <p className="ci-comm-price">{priceCredits} Credits + Fee</p>
             <div className="ci-purchase-actions">
               <LinkButton label="Purchase" href="/purchase" isPrimary color="var(--pink)"/>
-              <Button label="Contact" onClick={() => {}} color="var(--gray-bg)" />
+              <Button
+                label="Contact"
+                onClick={() => navigate(`/messages?with=${artist.id}`)}
+                color="var(--gray-bg)"
+              />
             </div>
           </div>
 
           <div className="ci-showcase">
             {/* Image carousel placeholder */}
             <div className="ci-carousel" aria-label="Commission preview carousel">
-              <div className="ci-carousel-image" role="img" aria-label={`Preview ${activeSlide + 1}`}>
+              <div
+                className="ci-carousel-image"
+                role="img"
+                aria-label={`Preview ${activeSlide + 1}`}
+                style={
+                  commission.thumbnail_url && activeSlide === 0
+                    ? {
+                        backgroundImage: `url(${commission.thumbnail_url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }
+                    : undefined
+                }
+              >
                 <span className="ci-carousel-index">
-                  {activeSlide + 1} / {COMMISSION.images}
+                  {activeSlide + 1} / {CAROUSEL_SLIDES}
                 </span>
               </div>
               <button
@@ -166,7 +212,7 @@ const CommissionInfo: React.FC = () => {
                 &#8250;
               </button>
               <div className="ci-carousel-dots">
-                {Array.from({ length: COMMISSION.images }).map((_, i) => (
+                {Array.from({ length: CAROUSEL_SLIDES }).map((_, i) => (
                   <button
                     key={i}
                     type="button"
@@ -180,27 +226,40 @@ const CommissionInfo: React.FC = () => {
             </div>
           </div>
 
-  
+
         </div>
 
         {/* Right column: scrollable info */}
         <div className="ci-right">
           {/* Artist header */}
           <div className="ci-artist-card">
-            {/* Links to the artist's profile once implemented */}
-            <a className="ci-artist-avatar-link" href="/profile" aria-label="View artist profile">
-              <Avatar size={48} />
+            <a
+              className="ci-artist-avatar-link"
+              href={`/profile?id=${artist.id}`}
+              aria-label={`View ${artist.username}'s profile`}
+            >
+              {artist.avatar_url ? (
+                <span className="ci-avatar">
+                  <img
+                    src={artist.avatar_url}
+                    alt=""
+                    style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }}
+                  />
+                </span>
+              ) : (
+                <Avatar size={48} />
+              )}
             </a>
             <div className="ci-artist-meta">
-              <span className="ci-artist-name">{COMMISSION.artist.name}</span>
+              <span className="ci-artist-name">{artist.username}</span>
               <div className="ci-artist-reputation">
                 <span className="ci-artist-rep">
-                  {COMMISSION.artist.reputation}/100 Reputation
+                  {artist.reputation}/100 Reputation
                 </span>
                 <div
                   className="ci-rep-bar"
                   role="progressbar"
-                  aria-valuenow={COMMISSION.artist.reputation}
+                  aria-valuenow={artist.reputation}
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-label="Artist reputation"
@@ -208,13 +267,13 @@ const CommissionInfo: React.FC = () => {
                   <div
                     className="ci-rep-bar-fill"
                     style={{
-                      width: `${COMMISSION.artist.reputation}%`,
-                      backgroundColor: `hsl(${COMMISSION.artist.reputation * 1.2}, 75%, 45%)`,
+                      width: `${artist.reputation}%`,
+                      backgroundColor: `hsl(${artist.reputation * 1.2}, 75%, 45%)`,
                     }}
                   />
                 </div>
               </div>
-              <span className="ci-artist-review">{COMMISSION.artist.review}</span>
+              {artist.about_me && <span className="ci-artist-review">{artist.about_me}</span>}
             </div>
           </div>
 
@@ -224,35 +283,41 @@ const CommissionInfo: React.FC = () => {
             <div className="ci-desc-grid">
               <div className="ci-desc-item">
                 <span className="ci-desc-label">Payment Type</span>
-                <span className="ci-desc-value">{COMMISSION.description.paymentType}</span>
+                <span className="ci-desc-value">
+                  {PAYMENT_TYPE_LABELS[commission.payment_type] ?? commission.payment_type}
+                </span>
               </div>
               <div className="ci-desc-item">
                 <span className="ci-desc-label">Time</span>
-                <span className="ci-desc-value">{COMMISSION.description.time}</span>
+                <span className="ci-desc-value">{commission.time_taken || 'Varies'}</span>
               </div>
               <div className="ci-desc-item ci-desc-item-wide">
                 <span className="ci-desc-label">Phases</span>
-                <span className="ci-desc-value">{COMMISSION.description.phases}</span>
+                <span className="ci-desc-value">
+                  {commission.phases.length > 0 ? commission.phases.join(', ') : 'Single delivery'}
+                </span>
               </div>
               <div className="ci-desc-item">
                 <span className="ci-desc-label">Sold</span>
-                <span className="ci-desc-value">{COMMISSION.description.sold}</span>
+                <span className="ci-desc-value">{commission.times_sold}</span>
               </div>
               <div className="ci-desc-item">
                 <span className="ci-desc-label">Avg. Satisfaction</span>
-                <span className="ci-desc-value">{COMMISSION.description.avgSatisfaction}</span>
+                <span className="ci-desc-value">{avgSatisfaction}</span>
               </div>
               <div className="ci-desc-item">
                 <span className="ci-desc-label">Total USD Price After Fee</span>
-                <span className="ci-desc-value">{COMMISSION.description.totalUsdAfterFee}</span>
+                <span className="ci-desc-value">{totalUsdAfterFee}</span>
               </div>
               <div className="ci-desc-item">
                 <span className="ci-desc-label">Price Per Phase</span>
-                <span className="ci-desc-value">{COMMISSION.description.pricePerPhase}</span>
+                <span className="ci-desc-value">{pricePerPhase}</span>
               </div>
               <div className="ci-desc-item ci-desc-item-wide">
                 <span className="ci-desc-label">Artist Terms</span>
-                <span className="ci-desc-value">{COMMISSION.description.artistTerms}</span>
+                <span className="ci-desc-value">
+                  {commission.artist_terms || 'No custom terms provided.'}
+                </span>
               </div>
             </div>
           </section>
@@ -310,15 +375,19 @@ const CommissionInfo: React.FC = () => {
                   <article className="ci-panel ci-review" key={review.id}>
                     <header className="ci-review-header">
                       <Avatar size={28} />
-                      <span className="ci-review-customer">{review.customer}</span>
-                      <span className="ci-review-reputation">{review.reputation}/100 Rep</span>
+                      <span className="ci-review-customer">{review.reviewer_name}</span>
+                      <span className="ci-review-reputation">
+                        {review.reviewer_reputation ?? '—'}/100 Rep
+                      </span>
                       <span className="ci-review-rating">Rating: {review.rating}/5</span>
                     </header>
-                    <p className="ci-review-text">{review.text}</p>
+                    {review.text && <p className="ci-review-text">{review.text}</p>}
                   </article>
                 ))
               ) : (
-                <p className="ci-review-empty">No reviews match your search.</p>
+                <p className="ci-review-empty">
+                  {reviews.length === 0 ? 'No reviews yet.' : 'No reviews match your search.'}
+                </p>
               )}
             </div>
           </section>

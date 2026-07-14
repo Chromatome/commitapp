@@ -158,6 +158,49 @@ export async function fetchMarketplaceListings(): Promise<MarketplaceListing[]> 
   });
 }
 
+/** A single commission with its artist's profile and reviews, for the commission info page. */
+export type CommissionInfoData = {
+  commission: Commission;
+  artist: Pick<Profile, 'id' | 'username' | 'reputation' | 'avatar_url' | 'about_me'>;
+  reviews: CommissionReview[];
+};
+
+/** Fetch one commission by id with its artist profile and reviews. Returns null when not found. */
+export async function fetchCommissionInfo(commissionId: string): Promise<CommissionInfoData | null> {
+  const { data, error } = await supabase
+    .from('commissions')
+    .select('*, profiles(id, username, reputation, avatar_url, about_me)')
+    .eq('id', commissionId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  const joined = data as unknown as typeof data & {
+    profiles: Pick<Profile, 'id' | 'username' | 'reputation' | 'avatar_url' | 'about_me'> | null;
+  };
+  if (!joined.profiles) return null;
+
+  const { data: reviewRows, error: reviewsError } = await supabase
+    .from('commission_reviews')
+    .select('*')
+    .eq('commission_id', commissionId)
+    .order('created_at', { ascending: false });
+  if (reviewsError) throw new Error(reviewsError.message);
+
+  const commission = {
+    ...data,
+    phases: Array.isArray(data.phases) ? (data.phases as string[]) : [],
+    tags: Array.isArray(data.tags) ? (data.tags as string[]) : [],
+  } as Commission;
+
+  const reviews = (reviewRows ?? []).map((r) => ({
+    ...r,
+    commission_title: commission.title,
+  })) as CommissionReview[];
+
+  return { commission, artist: joined.profiles, reviews };
+}
+
 export type NewCommissionInput = {
   title: string;
   price: number;

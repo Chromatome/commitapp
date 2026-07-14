@@ -8,6 +8,7 @@ import LandingPage from './pages/LandingPage.tsx'
 import Login from './pages/Login.tsx'
 import PurchaseSuccess from './pages/PurchaseSuccess.tsx'
 import Profile from './pages/Profile.tsx'
+import Messages from './pages/Messages.tsx'
 import RequireAuth from './components/RequireAuth.tsx'
 
 createRoot(document.getElementById('root')!).render(
@@ -35,6 +36,14 @@ createRoot(document.getElementById('root')!).render(
           element={
             <RequireAuth>
               <Profile />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/messages"
+          element={
+            <RequireAuth>
+              <Messages />
             </RequireAuth>
           }
         />
