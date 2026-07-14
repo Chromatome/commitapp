@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import useSWR from 'swr';
 import '../styles/styles.css';
 import '../styles/marketplace.css';
@@ -7,9 +7,12 @@ import Navbar from '../components/Navbar';
 import Background from '../components/Background';
 import Button from '../components/Button';
 import { useSession } from '../hooks/useSession';
+import { useMyProfile } from '../hooks/useMyProfile';
 import {
   fetchProfilePageData,
   createCommission,
+  updateProfile,
+  uploadAvatar,
   type Commission,
   type NewCommissionInput,
   type PaymentType,
@@ -302,6 +305,18 @@ const Profile: React.FC = () => {
   const userId = session?.user?.id;
   const [showForm, setShowForm] = useState(false);
 
+  // Avatar upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const { mutate: mutateMyProfile } = useMyProfile();
+
+  // About me editing state
+  const [editingAbout, setEditingAbout] = useState(false);
+  const [aboutDraft, setAboutDraft] = useState('');
+  const [savingAbout, setSavingAbout] = useState(false);
+  const [aboutError, setAboutError] = useState<string | null>(null);
+
   const { data, error, isLoading, mutate } = useSWR(
     userId ? ['profile-page', userId] : null,
     () => fetchProfilePageData(userId as string),
@@ -314,6 +329,64 @@ const Profile: React.FC = () => {
   // Fall back to email prefix if the profile row hasn't been created yet.
   const username =
     data?.profile.username || session?.user?.email?.split('@')[0] || 'Your Profile';
+  const avatarUrl = data?.profile.avatar_url ?? null;
+  const aboutMe = data?.profile.about_me ?? '';
+
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !userId) return;
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('Please choose an image file (PNG, JPG, WebP, or GIF).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError('Image must be 5MB or smaller.');
+      return;
+    }
+    setAvatarError(null);
+    setUploading(true);
+    try {
+      const { error: uploadError } = await uploadAvatar(userId, file);
+      if (uploadError) {
+        setAvatarError(uploadError);
+        return;
+      }
+      // Refresh this page's data and the shared profile (marketplace sidebar).
+      mutate();
+      mutateMyProfile();
+    } catch {
+      setAvatarError('Something went wrong uploading the image. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const startEditingAbout = () => {
+    setAboutDraft(aboutMe);
+    setAboutError(null);
+    setEditingAbout(true);
+  };
+
+  const saveAbout = async () => {
+    if (!userId) return;
+    setSavingAbout(true);
+    setAboutError(null);
+    try {
+      const { error: saveError } = await updateProfile(userId, { about_me: aboutDraft.trim() });
+      if (saveError) {
+        setAboutError(saveError);
+        return;
+      }
+      setEditingAbout(false);
+      mutate();
+      mutateMyProfile();
+    } catch {
+      setAboutError('Something went wrong saving. Please try again.');
+    } finally {
+      setSavingAbout(false);
+    }
+  };
 
   return (
     <div className="profile-page">
@@ -324,10 +397,37 @@ const Profile: React.FC = () => {
       <div className="pf-body">
         {/* ---- Header: avatar left, identity right ---- */}
         <header className="pf-header">
-          <div className="pf-avatar" aria-hidden="true">
-            <svg width="72" height="72" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6v2h16v-2c0-3.33-2.67-6-8-6z" />
-            </svg>
+          <div className="pf-avatar-wrap">
+            <div className="pf-avatar">
+              {avatarUrl ? (
+                <img src={avatarUrl || "/placeholder.svg"} alt={`${username}'s profile picture`} className="pf-avatar-img" />
+              ) : (
+                <svg width="72" height="72" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6v2h16v-2c0-3.33-2.67-6-8-6z" />
+                </svg>
+              )}
+            </div>
+            <button
+              type="button"
+              className="pf-avatar-edit"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? 'Uploading…' : 'Change'}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="sr-only"
+              aria-label="Upload a new profile picture"
+              onChange={handleAvatarFile}
+            />
+            {avatarError && (
+              <p className="pf-form-error pf-avatar-error" role="alert">
+                {avatarError}
+              </p>
+            )}
           </div>
 
           <div className="pf-identity">
@@ -375,6 +475,55 @@ const Profile: React.FC = () => {
             />
           </div>
         </header>
+
+        {/* ---- About me ---- */}
+        <section className="pf-panel" aria-label="About me">
+          <div className="pf-panel-header">
+            <h2 className="pf-panel-title">About Me</h2>
+            {!editingAbout && (
+              <button type="button" className="pf-edit-btn" onClick={startEditingAbout}>
+                Edit
+              </button>
+            )}
+          </div>
+          {editingAbout ? (
+            <div className="pf-about-edit">
+              <textarea
+                value={aboutDraft}
+                maxLength={2000}
+                rows={4}
+                onChange={(e) => setAboutDraft(e.target.value)}
+                placeholder="Tell people about yourself, your art style, what you love to draw..."
+                aria-label="About me"
+              />
+              {aboutError && (
+                <p className="pf-form-error" role="alert">
+                  {aboutError}
+                </p>
+              )}
+              <div className="pf-about-actions">
+                <Button
+                  label={savingAbout ? 'Saving…' : 'Save'}
+                  onClick={saveAbout}
+                  disabled={savingAbout}
+                  color="var(--green)"
+                />
+                <Button
+                  label="Cancel"
+                  onClick={() => setEditingAbout(false)}
+                  disabled={savingAbout}
+                  color="#e9e9e9"
+                />
+              </div>
+            </div>
+          ) : aboutMe ? (
+            <p className="pf-about-text">{aboutMe}</p>
+          ) : (
+            <p className="pf-muted">
+              Nothing here yet — use Edit to tell people about yourself and your art.
+            </p>
+          )}
+        </section>
 
         {/* ---- Create commission (anyone can become an artist) ---- */}
         {showForm && userId && (

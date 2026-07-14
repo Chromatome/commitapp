@@ -16,6 +16,7 @@ export type Profile = {
   reputation: number;
   sales_count: number;
   about_me: string;
+  avatar_url: string | null;
   created_at: string;
 };
 
@@ -65,7 +66,7 @@ export type ProfilePageData = {
 
 export async function fetchProfilePageData(userId: string): Promise<ProfilePageData> {
   const [profileRes, badgesRes, commissionsRes, reviewsRes] = await Promise.all([
-    supabase.from('profiles').select('id, username, reputation, sales_count, about_me, created_at').eq('id', userId).single(),
+    supabase.from('profiles').select('id, username, reputation, sales_count, about_me, avatar_url, created_at').eq('id', userId).single(),
     supabase.from('profile_badges').select('badges(slug, name, description, icon)').eq('profile_id', userId),
     supabase
       .from('commissions')
@@ -122,6 +123,56 @@ export type NewCommissionInput = {
   phases: string[];
   artist_terms: string;
 };
+
+/** Update the current user's own profile fields (username, about_me). */
+export async function updateProfile(
+  profileId: string,
+  fields: Partial<Pick<Profile, 'username' | 'about_me'>>,
+): Promise<{ error: string | null }> {
+  const { error } = await supabase.from('profiles').update(fields).eq('id', profileId);
+  return { error: error ? error.message : null };
+}
+
+/**
+ * Upload a new profile picture to the public `avatars` bucket
+ * ({userId}/avatar.ext — RLS restricts writes to the owner's folder)
+ * and save its public URL on the profile row.
+ */
+export async function uploadAvatar(
+  profileId: string,
+  file: File,
+): Promise<{ url: string | null; error: string | null }> {
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+  const path = `${profileId}/avatar-${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, {
+    cacheControl: '3600',
+    upsert: true,
+  });
+  if (uploadError) return { url: null, error: uploadError.message };
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+  const url = data.publicUrl;
+
+  const { error: saveError } = await supabase
+    .from('profiles')
+    .update({ avatar_url: url })
+    .eq('id', profileId);
+  if (saveError) return { url: null, error: saveError.message };
+
+  return { url, error: null };
+}
+
+/** Lightweight fetch of the current user's own profile (for navbar/sidebar avatars). */
+export async function fetchOwnProfile(userId: string): Promise<Profile | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username, reputation, sales_count, about_me, avatar_url, created_at')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as Profile | null;
+}
 
 /** Create a commission listing owned by the given profile. Anyone can list one. */
 export async function createCommission(
