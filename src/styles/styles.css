@@ -12,7 +12,6 @@
     --indigo: #a0c4ff;
     --purple: #bdb2ff;
     --pink: #ffc6ff;
-    
     animation: rotate 5s linear infinite, rainbow-cycle-anim 12s linear infinite;
 }
 
@@ -525,6 +524,13 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   padding: 0.05rem 0.35rem;
   border-radius: 999px;
+}
+
+
+.mp-card-rep-new {
+  color: oklch(0.42 0.15 250);
+  background-color: oklch(0.87 0.09 250);
+  border: 1px solid oklch(0.62 0.16 250);
 }
 
 .mp-card-price {
