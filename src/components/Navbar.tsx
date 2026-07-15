@@ -273,6 +273,14 @@ const Navbar: React.FC = () => {
                 Profile
               </Link>
               <Link
+                to="/purchases"
+                className="n-dropdown-item"
+                role="menuitem"
+                onClick={() => setMenuOpen(false)}
+              >
+                My Purchases
+              </Link>
+              <Link
                 to="/dashboard"
                 className="n-dropdown-item"
                 role="menuitem"

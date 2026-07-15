@@ -105,6 +105,33 @@ export async function fetchArtistOrders(artistId: string): Promise<OrderWithProf
   return (data ?? []).map(normalizeOrder);
 }
 
+export type BuyerOrder = OrderWithProfiles & {
+  /** Whether this order already has a review attached (only meaningful once completed). */
+  reviewed: boolean;
+};
+
+/**
+ * All orders where the viewer is the buyer (their "My Purchases" list),
+ * newest activity first. Includes whether each order has already been
+ * reviewed, so the UI can surface a "Leave a review" prompt for completed,
+ * unreviewed orders without an extra round trip per card.
+ */
+export async function fetchBuyerOrders(buyerId: string): Promise<BuyerOrder[]> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select(
+      '*, buyer:profiles!orders_buyer_id_fkey(id, username, avatar_url), artist:profiles!orders_artist_id_fkey(id, username, avatar_url), commission_reviews(id)',
+    )
+    .eq('buyer_id', buyerId)
+    .order('updated_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => {
+    const reviewRows = (row as { commission_reviews?: unknown }).commission_reviews;
+    const reviewed = Array.isArray(reviewRows) && reviewRows.length > 0;
+    return { ...normalizeOrder(row), reviewed };
+  });
+}
+
 /** In-progress orders between two specific users where the viewer is the artist. */
 export async function fetchArtistOrdersWithBuyer(
   artistId: string,

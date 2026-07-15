@@ -223,6 +223,32 @@
   scale: 1.05;
 }
 
+/* ---------- Review CTA (My Purchases page) ---------- */
+.db-review-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fff;
+  background: oklch(from var(--pink) calc(l - 0.15) c h);
+  border: 1px solid oklch(from var(--pink) calc(l - 0.3) c h);
+  border-radius: 10px;
+  padding: 0.35rem 0.8rem;
+  text-decoration: none;
+  transition: scale 0.2s ease-in-out;
+}
+
+.db-review-cta:hover {
+  scale: 1.05;
+}
+
+.db-reviewed-tag {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2a6b2a;
+}
+
 /* ---------- Empty / status states ---------- */
 .db-status-msg {
   font-size: 0.9rem;
