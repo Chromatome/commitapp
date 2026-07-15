@@ -168,7 +168,6 @@ const LandingPage: React.FC = () => {
           </div>
 
           <div className="fs-features reveal-up">
-            <h2>Features</h2>
             <div className="fs-feature-cards">
               <div className="fs-feature-card" style={{ '--card-color': 'var(--green)' } as React.CSSProperties}>
                 <div className="fs-feature-card-title">Reputation System</div>
