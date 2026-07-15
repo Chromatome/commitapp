@@ -123,6 +123,7 @@
     pointer-events: all;
     overflow: hidden;
     padding: 3rem 0 1rem;
+    background-color: #fff;
   }
 
   .landing-marquee .curved-loop-jacket {
