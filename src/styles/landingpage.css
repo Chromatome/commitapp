@@ -118,6 +118,23 @@
     gap: 8px;
   }
 
+  /* Marquee Divider */
+  .landing-marquee {
+    pointer-events: all;
+    overflow: hidden;
+    padding: 3rem 0 1rem;
+  }
+
+  .landing-marquee .curved-loop-jacket {
+    min-height: unset;
+    width: 100%;
+  }
+
+  .landing-marquee .curved-loop-svg {
+    font-size: 3.5rem;
+    fill: var(--pink);
+  }
+
   /* Features Section */
   .features-section {
     display: flex;
@@ -144,7 +161,7 @@
     
     color: var(--pink);
     font-weight: bold;
-    margin-top: 30%;
+    margin-top: 6rem;
 
     font-size: 3rem;
 
@@ -194,9 +211,18 @@
     flex-direction: column;
     max-width: 300px;
     border: 1px solid #000;
+    background: #fff;
+    box-shadow: 6px 6px 0 var(--purple);
+    transform: rotateZ(-2deg);
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 
     --bc-border: oklch(from var(--purple) calc(l - 0.3) c h);
     --btn-bg: linear-gradient(to bottom, var(--bc-light), var(--bc-dark));
+
+    &:hover {
+      transform: rotateZ(0deg) translateY(-6px) !important;
+      box-shadow: 10px 10px 0 var(--pink);
+    }
 
 
 
@@ -222,6 +248,51 @@
   }
   .fs-features {
     max-width: 900px;
+    width: 100%;
+  }
+
+  .fs-feature-cards {
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+
+    @media (max-width: 1024px) {
+      flex-direction: column;
+    }
+  }
+
+  .fs-feature-card {
+    --card-color: var(--purple);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f7f7f7 100%);
+    border: 1px solid oklch(from var(--card-color) calc(l - 0.25) c h);
+    border-radius: 8px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 0 var(--card-color);
+    transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+    cursor: default;
+
+    &:hover {
+      transform: translateY(-8px) rotateZ(-1deg);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 12px 0 var(--card-color);
+    }
+  }
+
+  .fs-feature-card-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    font-family: Helvetica, sans-serif;
+    color: oklch(from var(--card-color) calc(l - 0.45) c h);
+  }
+
+  .fs-feature-card-body {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #555;
   }
 
 
