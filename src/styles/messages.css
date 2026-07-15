@@ -254,6 +254,7 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 1rem;
+  max-height: 80vh;
 }
 
 /* Timestamp separators like classic SMS apps */
