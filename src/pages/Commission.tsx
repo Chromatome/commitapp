@@ -299,7 +299,7 @@ const CommissionInfo: React.FC = () => {
                     ? {
                         backgroundImage: `url(${commission.thumbnail_url})`,
                         backgroundSize: 'cover',
-                        backgroundPosition: 'center',
+                        backgroundPosition: 'contain',
                       }
                     : undefined
                 }

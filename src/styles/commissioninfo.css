@@ -110,6 +110,8 @@
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 3rem;
+
+  background-repeat: no-repeat;
 }
 
 .ci-carousel-index {
@@ -510,6 +512,8 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 0, 0, 0.06);
   padding: 0.75rem 0.9rem;
   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  white-space: pre-line;
+  
 }
 
 .ci-desc-item:hover {

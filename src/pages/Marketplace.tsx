@@ -142,7 +142,7 @@ const MarketPlace: React.FC = () => {
   const [priceMin, setPriceMin] = useState(PRICE_MIN);
   const [priceMax, setPriceMax] = useState<number | null>(null);
   const [filterReputation, setFilterReputation] = useState(0);
-  const [repMode, setRepMode] = useState<'min' | 'max'>('min');
+  const [repMode, setRepMode] = useState<'min' | 'max'>('max');
 
   // Until the user narrows it, the max tracks the (possibly still loading) catalog.
   const effectivePriceMax = priceMax ?? priceCeiling;
@@ -183,6 +183,7 @@ const MarketPlace: React.FC = () => {
         c.title.toLowerCase().includes(q);
       const matchesPrice = c.price >= priceMin && c.price <= effectivePriceMax;
       const matchesReputation = repMode === "max" ? (c.reputation ?? 50) >= filterReputation : (c.reputation ?? 50) <= filterReputation;
+      
       return matchesFilters && matchesQuery && matchesPrice && matchesReputation;
     });
   }, [allCommissions, activeFilters, query, priceMin, effectivePriceMax, filterReputation, repMode]);
