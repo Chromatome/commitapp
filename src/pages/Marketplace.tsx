@@ -31,10 +31,37 @@ const ARTIST_REPUTATION: Record<string, number> = {
   'Ana Ruiz': 69,
 };
 
-// Attaches each placeholder's reputation from the static map above, so the
-// shared CommissionCard only ever needs to read `commission.reputation`.
-const withReputation = (commissions: Omit<Commission, 'reputation'>[]): Commission[] =>
-  commissions.map((c) => ({ ...c, reputation: ARTIST_REPUTATION[c.artist] ?? 50 }));
+// Per-artist total sales counts. Artists with fewer than 5 sales are shown
+// with a "New" badge instead of a reputation score in the marketplace.
+const ARTIST_SALES: Record<string, number> = {
+  'Aria Vale': 214,
+  'Milo Chen': 87,
+  'Rin Okada': 156,
+  'Kofi Mensah': 302,
+  'Lena Ford': 63,
+  'Sora Kim': 94,
+  'Nia Blake': 41,
+  'Dev Rao': 118,
+  'Yuki Sato': 76,
+  'Tom Reed': 52,
+  'Max Wu': 2,
+  'Ivy Long': 0,
+  'Sam Diaz': 1,
+  'Ben Cole': 3,
+  'Ana Ruiz': 4,
+};
+
+// Attaches each placeholder's reputation and sales count from the static maps
+// above, so the shared CommissionCard only ever needs to read
+// `commission.reputation` / `commission.salesCount`.
+const withReputation = (
+  commissions: Omit<Commission, 'reputation' | 'salesCount'>[],
+): Commission[] =>
+  commissions.map((c) => ({
+    ...c,
+    reputation: ARTIST_REPUTATION[c.artist] ?? 50,
+    salesCount: ARTIST_SALES[c.artist] ?? 5,
+  }));
 
 // Placeholder commissions grouped by browse section.
 const PROMOTED: Commission[] = withReputation([
@@ -92,6 +119,7 @@ const MarketPlace: React.FC = () => {
         price: l.price,
         tags: l.tags,
         reputation: l.artist_reputation,
+        salesCount: l.artist_sales_count,
         thumbnailUrl: l.thumbnail_url,
       })),
     [dbListings],

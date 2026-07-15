@@ -11,11 +11,19 @@ export type Commission = {
   tags: string[];
   /** Reputation for real listings comes from the artist's profile row. */
   reputation?: number;
+  /** Total completed sales for the artist; fewer than 5 marks them as "New". */
+  salesCount?: number;
   /** Uploaded thumbnail for real listings; placeholders have none. */
   thumbnailUrl?: string | null;
 };
 
+const NEW_ARTIST_SALES_THRESHOLD = 5;
+
 const getReputation = (c: Commission) => c.reputation ?? 50;
+
+// Artists with fewer than 5 sales are considered too new to have an
+// established reputation, so we show a "New" badge instead of a score.
+const isNewArtist = (c: Commission) => (c.salesCount ?? NEW_ARTIST_SALES_THRESHOLD) < NEW_ARTIST_SALES_THRESHOLD;
 
 // Map reputation (0-100) to an oklch hue: 25 (red) -> 145 (green).
 const getReputationHue = (rep: number) => 25 + (Math.min(Math.max(rep, 0), 100) / 100) * 120;
@@ -52,20 +60,26 @@ export const CommissionCard: React.FC<{ commission: Commission }> = ({ commissio
       <span className="mp-card-title">{commission.title}</span>
       <span className="mp-card-artist">
         {commission.artist}
-        <span
-          className="mp-card-rep"
-          style={
-            {
-              '--rep-hue': getReputationHue(getReputation(commission)),
-            } as React.CSSProperties
-          }
-          title={`Artist reputation: ${getReputation(commission)}/100`}
-        >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 2l2.9 6.26L21.5 9.3l-4.75 4.4 1.15 6.8L12 17.2l-5.9 3.3 1.15-6.8L2.5 9.3l6.6-1.04L12 2z" />
-          </svg>
-          {getReputation(commission)}
-        </span>
+        {isNewArtist(commission) ? (
+          <span className="mp-card-rep mp-card-rep-new" title="New artist: fewer than 5 sales">
+            New
+          </span>
+        ) : (
+          <span
+            className="mp-card-rep"
+            style={
+              {
+                '--rep-hue': getReputationHue(getReputation(commission)),
+              } as React.CSSProperties
+            }
+            title={`Artist reputation: ${getReputation(commission)}/100`}
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2l2.9 6.26L21.5 9.3l-4.75 4.4 1.15 6.8L12 17.2l-5.9 3.3 1.15-6.8L2.5 9.3l6.6-1.04L12 2z" />
+            </svg>
+            {getReputation(commission)}
+          </span>
+        )}
       </span>
       <span className="mp-card-price">${commission.price}</span>
       <span className="mp-card-tags">

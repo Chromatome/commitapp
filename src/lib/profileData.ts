@@ -126,6 +126,8 @@ export type MarketplaceListing = {
   created_at: string;
   artist_name: string;
   artist_reputation: number;
+  /** Total completed sales for the artist; artists with fewer than 5 are shown as "New". */
+  artist_sales_count: number;
   thumbnail_url: string | null;
 };
 
@@ -133,7 +135,7 @@ export type MarketplaceListing = {
 export async function fetchMarketplaceListings(): Promise<MarketplaceListing[]> {
   const { data, error } = await supabase
     .from('commissions')
-    .select('id, title, price, tags, created_at, thumbnail_url, profiles(username, reputation)')
+    .select('id, title, price, tags, created_at, thumbnail_url, profiles(username, reputation, sales_count)')
     .order('created_at', { ascending: false })
     .limit(100);
   if (error) throw new Error(error.message);
@@ -146,7 +148,7 @@ export async function fetchMarketplaceListings(): Promise<MarketplaceListing[]> 
       tags: unknown;
       created_at: string;
       thumbnail_url: string | null;
-      profiles: { username: string; reputation: number } | null;
+      profiles: { username: string; reputation: number; sales_count: number } | null;
     };
     return {
       id: joined.id,
@@ -156,6 +158,7 @@ export async function fetchMarketplaceListings(): Promise<MarketplaceListing[]> 
       created_at: joined.created_at,
       artist_name: joined.profiles?.username ?? 'Unknown Artist',
       artist_reputation: joined.profiles?.reputation ?? 50,
+      artist_sales_count: joined.profiles?.sales_count ?? 0,
       thumbnail_url: joined.thumbnail_url ?? null,
     };
   });

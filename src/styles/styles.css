@@ -529,6 +529,12 @@
   border-radius: 999px;
 }
 
+.mp-card-rep-new {
+  color: oklch(0.42 0.15 250);
+  background-color: oklch(0.87 0.09 250);
+  border: 1px solid oklch(0.62 0.16 250);
+}
+
 .mp-card-price {
   font-size: 0.85rem;
   font-weight: 700;

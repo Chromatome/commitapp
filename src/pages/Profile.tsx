@@ -469,6 +469,10 @@ const Profile: React.FC = () => {
 
   const reputation = data?.profile.reputation ?? 50;
   const repHue = getReputationHue(reputation);
+  // Artists with fewer than 5 sales haven't built up an established
+  // reputation yet, so we show a "New Artist" indicator instead.
+  const salesCount = data?.profile.sales_count ?? 0;
+  const isNewArtist = salesCount < 5;
   // Fall back to email prefix only for the viewer's own not-yet-created row.
   const username =
     data?.profile.username ||
@@ -597,21 +601,27 @@ const Profile: React.FC = () => {
             </ul>
 
             <div className="pf-reputation">
-              <span className="pf-rep-label">{reputation}/100 Reputation</span>
+              <span className="pf-rep-label">
+                {isNewArtist ? 'New Artist' : `${reputation}/100 Reputation`}
+              </span>
               <div
                 className="pf-rep-bar"
                 role="progressbar"
-                aria-valuenow={reputation}
+                aria-valuenow={isNewArtist ? 100 : reputation}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label="Reputation"
+                aria-label={isNewArtist ? 'New Artist' : 'Reputation'}
               >
                 <div
-                  className="pf-rep-bar-fill"
-                  style={{
-                    width: `${reputation}%`,
-                    backgroundColor: `oklch(0.72 0.17 ${repHue})`,
-                  }}
+                  className={`pf-rep-bar-fill${isNewArtist ? ' pf-rep-bar-fill-new' : ''}`}
+                  style={
+                    isNewArtist
+                      ? { width: '100%' }
+                      : {
+                          width: `${reputation}%`,
+                          backgroundColor: `oklch(0.72 0.17 ${repHue})`,
+                        }
+                  }
                 />
               </div>
             </div>
