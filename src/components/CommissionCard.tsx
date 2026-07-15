@@ -81,7 +81,7 @@ export const CommissionCard: React.FC<{ commission: Commission }> = ({ commissio
           </span>
         )}
       </span>
-      <span className="mp-card-price">${commission.price}</span>
+      <span className="mp-card-price">{commission.price} C$</span>
       <span className="mp-card-tags">
         {commission.tags.map((tag) => (
           <span className="mp-tag" key={tag}>

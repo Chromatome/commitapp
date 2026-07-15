@@ -211,6 +211,8 @@
 .mp-filter-value {
   font-size: 0.8rem;
   color: #1a1a1a;
+  border: 1px solid #0000002d;
+  font-family: monospace;
 }
 
 .mp-price-inputs {

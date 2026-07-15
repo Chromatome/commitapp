@@ -141,7 +141,8 @@ const MarketPlace: React.FC = () => {
   const [query, setQuery] = useState('');
   const [priceMin, setPriceMin] = useState(PRICE_MIN);
   const [priceMax, setPriceMax] = useState<number | null>(null);
-  const [minReputation, setMinReputation] = useState(0);
+  const [filterReputation, setFilterReputation] = useState(0);
+  const [repMode, setRepMode] = useState<'min' | 'max'>('min');
 
   // Until the user narrows it, the max tracks the (possibly still loading) catalog.
   const effectivePriceMax = priceMax ?? priceCeiling;
@@ -158,7 +159,7 @@ const MarketPlace: React.FC = () => {
     setQuery('');
     setPriceMin(PRICE_MIN);
     setPriceMax(null);
-    setMinReputation(0);
+    setFilterReputation(0);
   };
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -168,7 +169,7 @@ const MarketPlace: React.FC = () => {
 
   const isPriceFiltered = priceMin > PRICE_MIN || (priceMax !== null && priceMax < priceCeiling);
   const isFiltering =
-    activeFilters.length > 0 || query.length > 0 || isPriceFiltered || minReputation > 0;
+    activeFilters.length > 0 || query.length > 0 || isPriceFiltered || filterReputation > 0;
 
   // Relevant commissions matching the applied filters and/or artist/title search.
   const results = useMemo(() => {
@@ -181,10 +182,10 @@ const MarketPlace: React.FC = () => {
         c.artist.toLowerCase().includes(q) ||
         c.title.toLowerCase().includes(q);
       const matchesPrice = c.price >= priceMin && c.price <= effectivePriceMax;
-      const matchesReputation = (c.reputation ?? 50) >= minReputation;
+      const matchesReputation = repMode === "max" ? (c.reputation ?? 50) >= filterReputation : (c.reputation ?? 50) <= filterReputation;
       return matchesFilters && matchesQuery && matchesPrice && matchesReputation;
     });
-  }, [allCommissions, activeFilters, query, priceMin, effectivePriceMax, minReputation]);
+  }, [allCommissions, activeFilters, query, priceMin, effectivePriceMax, filterReputation, repMode]);
 
   return (
     <div className="marketplace-page">
@@ -273,17 +274,19 @@ const MarketPlace: React.FC = () => {
             {/* Reputation */}
             <span className="mp-filter-label">
               Reputation
-              <span className="mp-filter-value">{minReputation}+</span>
+              <button className="mp-filter-value btn" onClick={() => setRepMode(repMode === 'min' ? 'max' : 'min')}>
+                {filterReputation}{repMode === 'max' ? '+' : '-'}
+              </button>
             </span>
             <input
               className="mp-rep-slider"
               type="range"
-              min={0}
-              max={100}
-              step={5}
-              value={minReputation}
-              onChange={(e) => setMinReputation(Number(e.target.value))}
-              aria-label={`Minimum artist reputation: ${minReputation}`}
+              min={1}
+              max={99}
+              step={1}
+              value={filterReputation}
+              onChange={(e) => setFilterReputation(Number(e.target.value))}
+              aria-label={`Minimum artist reputation: ${filterReputation}`}
             />
 
             {isFiltering && (
