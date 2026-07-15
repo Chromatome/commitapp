@@ -1,23 +1,32 @@
 import React from 'react';
+import { useSearchParams } from 'react-router';
+import useSWR from 'swr';
 import '../styles/styles.css';
 import '../styles/purchasesuccess.css';
 import Navbar from '../components/Navbar';
 import Background from '../components/Background';
 import LinkButton from '../components/LinkButton';
+import { fetchOrder, type OrderWithProfiles } from '../lib/orders';
 
-// Placeholder order data — this will come from the real purchase flow
-// once payment processing is wired up.
-const ORDER = {
-  commissionTitle: 'Comm Title',
-  artist: 'Artist Name',
-  priceCredits: '1,000.00',
-  totalUsdAfterFee: '$1,010.70',
-  paymentType: 'Installments Per Phase (Even)',
-  estimatedTime: '~1 month',
-  orderId: 'CMT-000001',
+const PAYMENT_TYPE_LABELS: Record<string, string> = {
+  upfront: 'All Upfront',
+  installments: 'Installments Per Phase',
+  split: 'Split (Upfront + Remainder)',
 };
 
 const PurchaseSuccess: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const orderId = searchParams.get('order');
+
+  const { data: order, isLoading } = useSWR<OrderWithProfiles | null>(
+    orderId ? ['order', orderId] : null,
+    () => fetchOrder(orderId as string),
+  );
+
+  const isPhased = order ? order.payment_type !== 'upfront' : false;
+  const totalCharged = order ? order.paid_credits + order.total_fee : 0;
+  const remaining = order ? order.total_price - order.paid_credits : 0;
+
   return (
     <div className="ps-page">
       <Background
@@ -38,47 +47,75 @@ const PurchaseSuccess: React.FC = () => {
 
           <h1 className="ps-title">Purchase Successful!</h1>
           <p className="ps-subtitle">
-            Your commission has been ordered. The artist will be notified and
-            work will begin shortly — you can track progress from your orders.
+            {isPhased
+              ? 'Your commission has been ordered and the first payment is in. The artist will request the next payment in your messages along with a progress snapshot.'
+              : 'Your commission has been ordered and paid in full. The artist will be notified and work will begin shortly.'}
           </p>
 
-          <section className="ps-summary" aria-label="Order summary">
-            <h2 className="ps-summary-title">Order Summary</h2>
-            <dl className="ps-summary-grid">
-              <div className="ps-summary-item">
-                <dt>Order ID</dt>
-                <dd>{ORDER.orderId}</dd>
-              </div>
-              <div className="ps-summary-item">
-                <dt>Commission</dt>
-                <dd>{ORDER.commissionTitle}</dd>
-              </div>
-              <div className="ps-summary-item">
-                <dt>Artist</dt>
-                <dd>{ORDER.artist}</dd>
-              </div>
-              <div className="ps-summary-item">
-                <dt>Payment Type</dt>
-                <dd>{ORDER.paymentType}</dd>
-              </div>
-              <div className="ps-summary-item">
-                <dt>Estimated Time</dt>
-                <dd>{ORDER.estimatedTime}</dd>
-              </div>
-              <div className="ps-summary-item">
-                <dt>Credits</dt>
-                <dd>{ORDER.priceCredits}</dd>
-              </div>
-              <div className="ps-summary-item ps-summary-total">
-                <dt>Total (USD, after fee)</dt>
-                <dd>{ORDER.totalUsdAfterFee}</dd>
-              </div>
-            </dl>
-          </section>
+          {isLoading && <p className="ps-subtitle">Loading your order…</p>}
+
+          {!isLoading && !order && (
+            <p className="ps-subtitle" role="alert">
+              We couldn&apos;t find this order. It may belong to another account.
+            </p>
+          )}
+
+          {order && (
+            <section className="ps-summary" aria-label="Order summary">
+              <h2 className="ps-summary-title">Order Summary</h2>
+              <dl className="ps-summary-grid">
+                <div className="ps-summary-item">
+                  <dt>Order ID</dt>
+                  <dd>{order.id.slice(0, 8).toUpperCase()}</dd>
+                </div>
+                <div className="ps-summary-item">
+                  <dt>Commission</dt>
+                  <dd>{order.title}</dd>
+                </div>
+                <div className="ps-summary-item">
+                  <dt>Artist</dt>
+                  <dd>{order.artist?.username ?? 'Unknown artist'}</dd>
+                </div>
+                <div className="ps-summary-item">
+                  <dt>Payment Type</dt>
+                  <dd>{PAYMENT_TYPE_LABELS[order.payment_type] ?? order.payment_type}</dd>
+                </div>
+                <div className="ps-summary-item">
+                  <dt>Commission Price</dt>
+                  <dd>{order.total_price.toLocaleString()} Credits</dd>
+                </div>
+                {isPhased && (
+                  <>
+                    <div className="ps-summary-item">
+                      <dt>Paid Now{order.payment_type === 'installments' ? ` (Phase 1 of ${order.phase_count})` : ' (Upfront)'}</dt>
+                      <dd>{order.paid_credits.toLocaleString()} Credits</dd>
+                    </div>
+                    <div className="ps-summary-item">
+                      <dt>Remaining (paid per phase)</dt>
+                      <dd>{remaining.toLocaleString()} Credits</dd>
+                    </div>
+                  </>
+                )}
+                <div className="ps-summary-item">
+                  <dt>Credit Fee (10%, min 1)</dt>
+                  <dd>{order.total_fee.toLocaleString()} Credits</dd>
+                </div>
+                <div className="ps-summary-item ps-summary-total">
+                  <dt>Total Charged</dt>
+                  <dd>{totalCharged.toLocaleString()} Credits</dd>
+                </div>
+              </dl>
+            </section>
+          )}
 
           <div className="ps-actions">
-            <LinkButton label="Back to Marketplace" href="/marketplace" isPrimary color="var(--pink)" />
-            <LinkButton label="View Commission" href="/commission" color="var(--gray-bg)" />
+            <LinkButton
+              label="Message the Artist"
+              href={order?.artist ? `/messages?with=${order.artist.id}` : '/messages'}
+              isPrimary
+              color="var(--pink)"
+            />
+            <LinkButton label="Back to Marketplace" href="/marketplace" color="var(--gray-bg)" />
           </div>
         </div>
       </main>
