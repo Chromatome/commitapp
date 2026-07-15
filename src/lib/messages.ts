@@ -11,6 +11,15 @@ import { supabase } from './supabase';
  * on `messages` for INSERTs (new messages) and UPDATEs (read receipts).
  */
 
+export type MessageAttachment = {
+  url: string;
+  name: string;
+  type: string;
+  size: number;
+};
+
+export type MessageKind = 'text' | 'payment_request' | 'system';
+
 export type Message = {
   id: string;
   conversation_id: string;
@@ -18,7 +27,18 @@ export type Message = {
   body: string;
   created_at: string;
   read_at: string | null;
+  /** 'text' = normal chat, 'payment_request' = artist asking for a phase payment, 'system' = purchase receipts. */
+  kind: MessageKind;
+  attachments: MessageAttachment[];
+  order_id: string | null;
+  payment_amount: number | null;
+  payment_fee: number | null;
+  payment_status: 'pending' | 'paid' | null;
+  snapshot_url: string | null;
 };
+
+const MESSAGE_COLUMNS =
+  'id, conversation_id, sender_id, body, created_at, read_at, kind, attachments, order_id, payment_amount, payment_fee, payment_status, snapshot_url';
 
 export type ConversationSummary = {
   id: string;
@@ -150,26 +170,34 @@ export async function fetchConversations(viewerId: string): Promise<Conversation
 export async function fetchMessages(conversationId: string): Promise<Message[]> {
   const { data, error } = await supabase
     .from('messages')
-    .select('id, conversation_id, sender_id, body, created_at, read_at')
+    .select(MESSAGE_COLUMNS)
     .eq('conversation_id', conversationId)
     .order('created_at', { ascending: true });
   if (error) throw new Error(error.message);
   return (data ?? []) as Message[];
 }
 
-/** Send a message and bump the conversation's last activity timestamp. */
+/** Send a message (optionally with file attachments) and bump the conversation's last activity timestamp. */
 export async function sendMessage(
   conversationId: string,
   senderId: string,
   body: string,
+  attachments: MessageAttachment[] = [],
 ): Promise<{ message: Message | null; error: string | null }> {
   const trimmed = body.trim();
-  if (!trimmed) return { message: null, error: 'Message cannot be empty.' };
+  if (!trimmed && attachments.length === 0) {
+    return { message: null, error: 'Message cannot be empty.' };
+  }
 
   const { data, error } = await supabase
     .from('messages')
-    .insert({ conversation_id: conversationId, sender_id: senderId, body: trimmed })
-    .select('id, conversation_id, sender_id, body, created_at, read_at')
+    .insert({
+      conversation_id: conversationId,
+      sender_id: senderId,
+      body: trimmed,
+      attachments,
+    })
+    .select(MESSAGE_COLUMNS)
     .single();
   if (error) return { message: null, error: error.message };
 

@@ -5,12 +5,14 @@ import '../styles/commissioninfo.css';
 import Navbar from '../components/Navbar';
 import Background from '../components/Background';
 import Button from '../components/Button';
-import LinkButton from '../components/LinkButton';
 import {
   fetchCommissionInfo,
   type CommissionInfoData,
   type PaymentType,
 } from '../lib/profileData';
+import { creditFee, purchaseCommission, upfrontDue } from '../lib/orders';
+import { useSession } from '../hooks/useSession';
+import { useMyProfile } from '../hooks/useMyProfile';
 
 // Number of carousel slides (placeholder previews until commission galleries exist).
 const CAROUSEL_SLIDES = 4;
@@ -36,10 +38,15 @@ const CommissionInfo: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const commissionId = searchParams.get('id');
+  const { session } = useSession();
+  const viewerId = session?.user?.id ?? null;
+  const { profile: myProfile, mutate: mutateMyProfile } = useMyProfile();
 
   const [data, setData] = useState<CommissionInfoData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [purchasing, setPurchasing] = useState(false);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
   const [activeSlide, setActiveSlide] = useState(0);
   const [reviewSearch, setReviewSearch] = useState('');
@@ -130,20 +137,40 @@ const CommissionInfo: React.FC = () => {
 
   if (!data) return null;
   const { commission, artist } = data;
-  const priceCredits = Number(commission.price).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  // Rough USD estimate after the platform fee (credits are 1:1 with USD pre-fee).
-  const totalUsdAfterFee = `$${(Number(commission.price) * 1.0107).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
   const phaseCount = Math.max(commission.phases.length, 1);
-  const pricePerPhase = `$${((Number(commission.price) * 1.0107) / phaseCount).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} + Tax`;
+
+  // What the buyer owes today, per payment type, plus the 10% credit fee (min 1).
+  const dueNow = upfrontDue(
+    commission.price,
+    commission.payment_type,
+    phaseCount,
+    commission.split_upfront_percent,
+  );
+  const feeNow = creditFee(dueNow);
+  const totalDueNow = dueNow + feeNow;
+
+  const priceCredits = Number(commission.price).toLocaleString();
+  const soldOut = commission.stock !== null && commission.stock <= 0;
+  const isOwnListing = viewerId !== null && viewerId === artist.id;
+  const notEnoughCredits = myProfile !== null && myProfile.credits < totalDueNow;
+
+  const handlePurchase = async () => {
+    if (purchasing) return;
+    if (!viewerId) {
+      navigate('/login');
+      return;
+    }
+    setPurchasing(true);
+    setPurchaseError(null);
+    const { orderId, error: buyError } = await purchaseCommission(commission.id);
+    setPurchasing(false);
+    if (buyError || !orderId) {
+      setPurchaseError(buyError ?? 'Purchase failed. Please try again.');
+      return;
+    }
+    mutateMyProfile();
+    navigate(`/purchase?order=${orderId}`);
+  };
 
   return (
     <div className="commission-page">
@@ -164,14 +191,51 @@ const CommissionInfo: React.FC = () => {
           <div className="ci-purchase-card">
             <h1 className="ci-comm-title">{commission.title}</h1>
             <p className="ci-comm-price">{priceCredits} Credits + Fee</p>
+            <p className="ci-due-now">
+              Due now: {totalDueNow.toLocaleString()} credits
+              <span className="ci-due-breakdown">
+                ({dueNow.toLocaleString()} + {feeNow.toLocaleString()} fee)
+              </span>
+            </p>
+            {commission.stock !== null && (
+              <p className={`ci-stock${soldOut ? ' ci-stock-out' : ''}`}>
+                {soldOut
+                  ? 'Sold out'
+                  : `${commission.stock} spot${commission.stock === 1 ? '' : 's'} left`}
+              </p>
+            )}
             <div className="ci-purchase-actions">
-              <LinkButton label="Purchase" href="/purchase" isPrimary color="var(--pink)"/>
+              <Button
+                label={
+                  purchasing
+                    ? 'Purchasing…'
+                    : soldOut
+                      ? 'Sold Out'
+                      : isOwnListing
+                        ? 'Your Listing'
+                        : 'Purchase'
+                }
+                onClick={handlePurchase}
+                disabled={purchasing || soldOut || isOwnListing}
+                color="var(--pink)"
+              />
               <Button
                 label="Contact"
                 onClick={() => navigate(`/messages?with=${artist.id}`)}
                 color="var(--gray-bg)"
               />
             </div>
+            {notEnoughCredits && !soldOut && !isOwnListing && (
+              <p className="ci-purchase-error" role="alert">
+                You have {myProfile?.credits.toLocaleString()} credits — you need{' '}
+                {totalDueNow.toLocaleString()} to purchase.
+              </p>
+            )}
+            {purchaseError && (
+              <p className="ci-purchase-error" role="alert">
+                {purchaseError}
+              </p>
+            )}
           </div>
 
           <div className="ci-showcase">
@@ -306,12 +370,18 @@ const CommissionInfo: React.FC = () => {
                 <span className="ci-desc-value">{avgSatisfaction}</span>
               </div>
               <div className="ci-desc-item">
-                <span className="ci-desc-label">Total USD Price After Fee</span>
-                <span className="ci-desc-value">{totalUsdAfterFee}</span>
+                <span className="ci-desc-label">Stock</span>
+                <span className="ci-desc-value">
+                  {commission.stock === null
+                    ? 'Unlimited'
+                    : soldOut
+                      ? 'Sold out'
+                      : `${commission.stock} spot${commission.stock === 1 ? '' : 's'} left`}
+                </span>
               </div>
               <div className="ci-desc-item">
-                <span className="ci-desc-label">Price Per Phase</span>
-                <span className="ci-desc-value">{pricePerPhase}</span>
+                <span className="ci-desc-label">Due Now (incl. 10% fee)</span>
+                <span className="ci-desc-value">{totalDueNow.toLocaleString()} Credits</span>
               </div>
               <div className="ci-desc-item ci-desc-item-wide">
                 <span className="ci-desc-label">Artist Terms</span>
