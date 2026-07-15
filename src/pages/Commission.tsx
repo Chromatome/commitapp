@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import '../styles/styles.css';
 import '../styles/commissioninfo.css';
@@ -11,6 +11,7 @@ import {
   type PaymentType,
 } from '../lib/profileData';
 import { creditFee, purchaseCommission, upfrontDue } from '../lib/orders';
+import { fetchReviewEligibility, submitCommissionReview, type ReviewEligibility } from '../lib/reviews';
 import { useSession } from '../hooks/useSession';
 import { useMyProfile } from '../hooks/useMyProfile';
 
@@ -53,36 +54,84 @@ const CommissionInfo: React.FC = () => {
   const [minRating, setMinRating] = useState(0);
   const [sort, setSort] = useState<ReviewSort>('recent');
 
-  useEffect(() => {
-    if (!commissionId) {
-      setLoading(false);
-      setLoadError('No commission selected. Browse the marketplace to pick one.');
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
+  const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSubmitError, setReviewSubmitError] = useState<string | null>(null);
 
-    fetchCommissionInfo(commissionId)
-      .then((info) => {
-        if (cancelled) return;
+  const loadCommission = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!commissionId) {
+        setLoading(false);
+        setLoadError('No commission selected. Browse the marketplace to pick one.');
+        return;
+      }
+      if (!opts?.silent) setLoading(true);
+      try {
+        const info = await fetchCommissionInfo(commissionId);
         if (!info) {
           setLoadError('This commission could not be found. It may have been removed.');
         } else {
           setData(info);
           setLoadError(null);
         }
+      } catch {
+        setLoadError('Something went wrong loading this commission. Try refreshing.');
+      } finally {
         setLoading(false);
+      }
+    },
+    [commissionId],
+  );
+
+  useEffect(() => {
+    loadCommission();
+  }, [loadCommission]);
+
+  // Refresh the "leave a review" eligibility once the commission has loaded
+  // and we know who's viewing (and whether they're the artist themselves).
+  useEffect(() => {
+    if (!commissionId || !viewerId || viewerId === data?.artist.id) {
+      setEligibility(null);
+      return;
+    }
+    let cancelled = false;
+    fetchReviewEligibility(commissionId, viewerId)
+      .then((result) => {
+        if (!cancelled) setEligibility(result);
       })
       .catch(() => {
-        if (cancelled) return;
-        setLoadError('Something went wrong loading this commission. Try refreshing.');
-        setLoading(false);
+        if (!cancelled) setEligibility(null);
       });
-
     return () => {
       cancelled = true;
     };
-  }, [commissionId]);
+  }, [commissionId, viewerId, data?.artist.id]);
+
+  const handleSubmitReview = async () => {
+    if (!eligibility || submittingReview) return;
+    if (reviewRating < 1 || reviewRating > 5) {
+      setReviewSubmitError('Pick a star rating from 1 to 5.');
+      return;
+    }
+    setSubmittingReview(true);
+    setReviewSubmitError(null);
+    const { error } = await submitCommissionReview(eligibility.orderId, reviewRating, reviewText);
+    setSubmittingReview(false);
+    if (error) {
+      setReviewSubmitError(error);
+      return;
+    }
+    setEligibility({ ...eligibility, alreadyReviewed: true });
+    setReviewRating(0);
+    setReviewText('');
+    // Reputation and the review list both changed server-side — refetch
+    // quietly (no loading spinner) so the new review + updated reputation
+    // bar show up immediately.
+    loadCommission({ silent: true });
+  };
 
   const nextSlide = () => setActiveSlide((s) => (s + 1) % CAROUSEL_SLIDES);
   const prevSlide = () => setActiveSlide((s) => (s - 1 + CAROUSEL_SLIDES) % CAROUSEL_SLIDES);
@@ -438,6 +487,62 @@ const CommissionInfo: React.FC = () => {
                 </select>
               </div>
             </div>
+
+            {eligibility && !eligibility.alreadyReviewed && (
+              <div className="ci-panel ci-review-form">
+                <h3 className="ci-review-form-title">Leave a review</h3>
+                <p className="ci-review-form-hint">
+                  This commission is paid off in full — let others know how it went.
+                </p>
+                <div
+                  className="ci-star-input"
+                  role="radiogroup"
+                  aria-label="Star rating"
+                >
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      role="radio"
+                      aria-checked={reviewRating === star}
+                      aria-label={`${star} star${star === 1 ? '' : 's'}`}
+                      className={`ci-star${(hoverRating || reviewRating) >= star ? ' filled' : ''}`}
+                      onClick={() => setReviewRating(star)}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+                <label className="sr-only" htmlFor="ci-review-text">
+                  Review text (optional)
+                </label>
+                <textarea
+                  id="ci-review-text"
+                  className="ci-review-textarea"
+                  placeholder="Share details of your experience (optional)"
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  rows={3}
+                  maxLength={1000}
+                />
+                {reviewSubmitError && (
+                  <p className="ci-purchase-error" role="alert">
+                    {reviewSubmitError}
+                  </p>
+                )}
+                <Button
+                  label={submittingReview ? 'Submitting…' : 'Submit Review'}
+                  onClick={handleSubmitReview}
+                  disabled={submittingReview || reviewRating === 0}
+                  color="var(--pink)"
+                />
+              </div>
+            )}
+            {eligibility?.alreadyReviewed && (
+              <p className="ci-review-thanks">Thanks — you've already reviewed this commission.</p>
+            )}
 
             <div className="ci-review-list">
               {filteredReviews.length > 0 ? (
