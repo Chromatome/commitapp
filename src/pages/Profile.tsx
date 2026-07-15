@@ -13,9 +13,11 @@ import { useMyProfile } from '../hooks/useMyProfile';
 import {
   fetchProfilePageData,
   createCommission,
+  updateCommission,
   updateProfile,
   uploadAvatar,
   uploadCommissionThumbnail,
+  type Commission,
   type NewCommissionInput,
   type PaymentType,
 } from '../lib/profileData';
@@ -58,6 +60,8 @@ type FormState = {
   phases: string;
   tags: string[];
   artistTerms: string;
+  /** Number of purchase spots; empty string = unlimited. */
+  stock: string;
 };
 
 const INITIAL_FORM: FormState = {
@@ -69,13 +73,29 @@ const INITIAL_FORM: FormState = {
   phases: 'Sketch, Line Art, Colored, Rendered/Final',
   tags: [],
   artistTerms: '',
+  stock: '',
 };
 
-const CreateCommissionForm: React.FC<{
+/** Prefill the form from an existing commission when editing. */
+const formFromCommission = (c: Commission): FormState => ({
+  title: c.title,
+  price: String(c.price),
+  paymentType: c.payment_type,
+  splitPercent: String(c.split_upfront_percent ?? 50),
+  timeTaken: c.time_taken,
+  phases: c.phases.join(', '),
+  tags: c.tags,
+  artistTerms: c.artist_terms,
+  stock: c.stock === null ? '' : String(c.stock),
+});
+
+const CommissionForm: React.FC<{
   profileId: string;
+  /** When set, the form edits this commission instead of creating a new one. */
+  existing?: Commission | null;
   onCreated: () => void;
-}> = ({ profileId, onCreated }) => {
-  const [form, setForm] = useState<FormState>(INITIAL_FORM);
+}> = ({ profileId, existing = null, onCreated }) => {
+  const [form, setForm] = useState<FormState>(existing ? formFromCommission(existing) : INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -84,7 +104,7 @@ const CreateCommissionForm: React.FC<{
   // commission is created, since the upload path is keyed by commission id.
   const thumbInputRef = useRef<HTMLInputElement>(null);
   const [thumbFile, setThumbFile] = useState<File | null>(null);
-  const [thumbPreview, setThumbPreview] = useState<string | null>(null);
+  const [thumbPreview, setThumbPreview] = useState<string | null>(existing?.thumbnail_url ?? null);
   const [thumbError, setThumbError] = useState<string | null>(null);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
@@ -145,6 +165,12 @@ const CreateCommissionForm: React.FC<{
       setError('Upfront percentage must be a whole number between 1 and 99.');
       return;
     }
+    const stockStr = form.stock.trim();
+    const stock = stockStr === '' ? null : Number(stockStr);
+    if (stock !== null && (!Number.isInteger(stock) || stock < 0)) {
+      setError('Stock must be a whole number of spots (0 or more), or left empty for unlimited.');
+      return;
+    }
 
     const input: NewCommissionInput = {
       title,
@@ -158,30 +184,47 @@ const CreateCommissionForm: React.FC<{
         .map((p) => p.trim())
         .filter((p) => p.length > 0),
       artist_terms: form.artistTerms,
+      stock,
     };
 
     setSubmitting(true);
     try {
-      const { id, error: createError } = await createCommission(profileId, input);
-      if (createError || !id) {
-        setError(createError ?? 'Something went wrong creating the commission. Please try again.');
-        return;
+      let id = existing?.id ?? null;
+      if (existing) {
+        const { error: updateError } = await updateCommission(existing.id, input);
+        if (updateError) {
+          setError(updateError);
+          return;
+        }
+      } else {
+        const { id: newId, error: createError } = await createCommission(profileId, input);
+        if (createError || !newId) {
+          setError(createError ?? 'Something went wrong creating the commission. Please try again.');
+          return;
+        }
+        id = newId;
       }
 
       let thumbWarning: string | null = null;
-      if (thumbFile) {
+      if (thumbFile && id) {
         const { error: thumbUploadError } = await uploadCommissionThumbnail(id, profileId, thumbFile);
         if (thumbUploadError) {
           thumbWarning = ` (thumbnail failed to upload: ${thumbUploadError})`;
         }
       }
 
-      setForm(INITIAL_FORM);
-      clearThumb();
-      setNotice(`Commission listed! It now appears in your gallery below.${thumbWarning ?? ''}`);
+      if (!existing) {
+        setForm(INITIAL_FORM);
+        clearThumb();
+      }
+      setNotice(
+        existing
+          ? `Commission updated!${thumbWarning ?? ''}`
+          : `Commission listed! It now appears in your gallery below.${thumbWarning ?? ''}`,
+      );
       onCreated();
     } catch {
-      setError('Something went wrong creating the commission. Please try again.');
+      setError('Something went wrong saving the commission. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -255,6 +298,22 @@ const CreateCommissionForm: React.FC<{
             placeholder="1000"
             required
           />
+        </label>
+
+        <label className="pf-field">
+          <span className="pf-field-label">Stock (spots)</span>
+          <input
+            type="number"
+            min={0}
+            step={1}
+            value={form.stock}
+            onChange={(e) => set('stock', e.target.value)}
+            placeholder="Leave empty for unlimited"
+            aria-describedby="pf-stock-hint"
+          />
+          <span id="pf-stock-hint" className="pf-field-hint">
+            Only this many people can purchase. Empty = unlimited.
+          </span>
         </label>
 
         <label className="pf-field">
@@ -343,7 +402,7 @@ const CreateCommissionForm: React.FC<{
 
       <div className="pf-form-submit">
         <Button
-          label={submitting ? 'Listing…' : 'List Commission'}
+          label={submitting ? 'Saving…' : existing ? 'Save Changes' : 'List Commission'}
           onClick={() => {}}
           type="submit"
           disabled={submitting}
@@ -370,6 +429,8 @@ const Profile: React.FC = () => {
   const isOwnProfile = Boolean(viewerId) && profileId === viewerId;
 
   const [showForm, setShowForm] = useState(false);
+  /** Commission currently being edited (own profile only). */
+  const [editingCommission, setEditingCommission] = useState<Commission | null>(null);
 
   // Avatar upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -633,11 +694,36 @@ const Profile: React.FC = () => {
         {isOwnProfile && showForm && viewerId && (
           <section className="pf-panel" aria-label="Create a commission">
             <h2 className="pf-panel-title">New Commission</h2>
-            <CreateCommissionForm
+            <CommissionForm
               profileId={viewerId}
               onCreated={() => {
                 mutate();
                 setShowForm(false);
+              }}
+            />
+          </section>
+        )}
+
+        {/* ---- Edit an existing commission ---- */}
+        {isOwnProfile && editingCommission && viewerId && (
+          <section className="pf-panel" aria-label="Edit commission">
+            <div className="pf-panel-header">
+              <h2 className="pf-panel-title">Edit &quot;{editingCommission.title}&quot;</h2>
+              <button
+                type="button"
+                className="pf-edit-btn"
+                onClick={() => setEditingCommission(null)}
+              >
+                Cancel
+              </button>
+            </div>
+            <CommissionForm
+              key={editingCommission.id}
+              profileId={viewerId}
+              existing={editingCommission}
+              onCreated={() => {
+                mutate();
+                setEditingCommission(null);
               }}
             />
           </section>
@@ -700,7 +786,33 @@ const Profile: React.FC = () => {
                   reputation,
                   thumbnailUrl: c.thumbnail_url,
                 };
-                return <CommissionCard commission={listing} key={c.id} />;
+                return (
+                  <div className="pf-comm-card" key={c.id}>
+                    <CommissionCard commission={listing} />
+                    <div className="pf-comm-card-meta">
+                      <span className="pf-comm-stock">
+                        {c.stock === null
+                          ? 'Unlimited spots'
+                          : c.stock === 0
+                            ? 'Sold out'
+                            : `${c.stock} spot${c.stock === 1 ? '' : 's'} left`}
+                      </span>
+                      {isOwnProfile && (
+                        <button
+                          type="button"
+                          className="pf-edit-btn"
+                          onClick={() => {
+                            setEditingCommission(c);
+                            setShowForm(false);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
               })}
             </div>
           ) : (

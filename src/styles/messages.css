@@ -361,6 +361,264 @@
   }
 }
 
+/* ---------- System messages (purchase receipts) ---------- */
+.msg-system {
+  align-self: center;
+  max-width: 85%;
+  text-align: center;
+  font-family: Helvetica, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6a6a6a;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 0.4rem 0.9rem;
+  margin: 0.25rem 0;
+}
+
+/* ---------- Attachments inside bubbles ---------- */
+.msg-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.msg-attachment-img {
+  display: block;
+  max-width: 260px;
+  max-height: 220px;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.msg-attachment-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Payment request card ---------- */
+.msg-payment-card {
+  max-width: min(75%, 340px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 14px;
+  background: #fffdf6;
+  border: 1px solid oklch(from var(--pink) calc(l - 0.2) c h);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-family: Helvetica, sans-serif;
+}
+
+.msg-payment-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: oklch(from var(--pink) calc(l - 0.45) c h);
+}
+
+.msg-payment-snapshot {
+  display: block;
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.msg-payment-body {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #2a2a2a;
+  line-height: 1.4;
+}
+
+.msg-payment-amount {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0a0a0a;
+}
+
+.msg-payment-fee {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #777;
+}
+
+.msg-payment-paid {
+  align-self: flex-start;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #2a6b2a;
+  background: rgba(42, 107, 42, 0.1);
+  border-radius: 8px;
+  padding: 0.2rem 0.6rem;
+}
+
+.msg-payment-pending {
+  align-self: flex-start;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #8a6d1a;
+}
+
+.msg-pay-btn {
+  align-self: flex-start;
+  padding: 0.45rem 1rem;
+  background-color: var(--pink);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 51%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  border: 1px solid oklch(from var(--pink) calc(l - 0.3) c h);
+  border-radius: 12px;
+  color: oklch(from var(--pink) calc(l - 0.55) c h);
+  font-family: Helvetica, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: scale 0.2s ease-in-out;
+}
+
+.msg-pay-btn:hover:not(:disabled) {
+  scale: 1.05;
+}
+
+.msg-pay-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---------- Request Payment button + form (artist) ---------- */
+.msg-request-btn {
+  margin-left: auto;
+  padding: 0.35rem 0.85rem;
+  background: var(--pink);
+  border: 1px solid oklch(from var(--pink) calc(l - 0.3) c h);
+  border-radius: 12px;
+  color: oklch(from var(--pink) calc(l - 0.55) c h);
+  font-family: Helvetica, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.msg-payform {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.85);
+  font-family: Helvetica, sans-serif;
+}
+
+.msg-payform-summary {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #2a2a2a;
+}
+
+.msg-payform-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #555;
+}
+
+.msg-payform-field input[type='text'],
+.msg-payform-field select {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: Helvetica, sans-serif;
+  background: #fff;
+}
+
+/* ---------- Pending attachments above the composer ---------- */
+.msg-pending-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(244, 244, 244, 0.6));
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.msg-pending-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.5rem;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  font-family: Helvetica, sans-serif;
+  font-size: 0.78rem;
+  color: #333;
+}
+
+.msg-pending-thumb {
+  width: 26px;
+  height: 26px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.msg-pending-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.msg-pending-chip button {
+  border: none;
+  background: none;
+  font-size: 1rem;
+  line-height: 1;
+  color: #888;
+  cursor: pointer;
+}
+
+.msg-attach-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+  transition: scale 0.2s ease-in-out;
+}
+
+.msg-attach-btn:hover {
+  scale: 1.08;
+}
+
 /* ---------- Composer ---------- */
 .msg-composer {
   display: flex;

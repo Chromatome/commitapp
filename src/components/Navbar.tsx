@@ -4,6 +4,7 @@ import '../styles/styles.css';
 import logo from "../assets/commitsticker.png";
 import { logOut } from '../lib/auth';
 import { useSession } from '../hooks/useSession';
+import { useMyProfile } from '../hooks/useMyProfile';
 import {
   fetchConversations,
   fetchUnreadConversationCount,
@@ -28,6 +29,7 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { session } = useSession();
   const viewerId = session?.user?.id ?? null;
+  const { profile: myProfile } = useMyProfile();
 
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
@@ -151,11 +153,11 @@ const Navbar: React.FC = () => {
 
       <div className="n-header-right">
         <div className="n-credits">
-          Credits: 0
+          Credits: {(myProfile?.credits ?? 0).toLocaleString()}
           <button
             type="button"
             className="n-buy-credits"
-            onClick={() => navigate('/purchase')}
+            onClick={() => navigate('/marketplace')}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <line x1="12" y1="5" x2="12" y2="19" />
@@ -269,6 +271,14 @@ const Navbar: React.FC = () => {
                 onClick={() => setMenuOpen(false)}
               >
                 Profile
+              </Link>
+              <Link
+                to="/dashboard"
+                className="n-dropdown-item"
+                role="menuitem"
+                onClick={() => setMenuOpen(false)}
+              >
+                Artist Dashboard
               </Link>
               <Link
                 to="/settings"

@@ -14,7 +14,17 @@ import {
   subscribeToMessages,
   type ConversationSummary,
   type Message,
+  type MessageAttachment,
 } from '../lib/messages';
+import {
+  fetchArtistOrdersWithBuyer,
+  payPhasePayment,
+  phaseDue,
+  requestPhasePayment,
+  uploadMessageFile,
+  type Order,
+} from '../lib/orders';
+import { useMyProfile } from '../hooks/useMyProfile';
 import { supabase } from '../lib/supabase';
 import '../styles/styles.css';
 import '../styles/messages.css';
@@ -68,6 +78,22 @@ const Messages: React.FC = () => {
   /** Mobile: show the thread pane instead of the inbox list. */
   const [mobileThreadOpen, setMobileThreadOpen] = React.useState(false);
 
+  /** Files staged for the next message. */
+  const [pendingFiles, setPendingFiles] = React.useState<File[]>([]);
+  /** In-progress orders where the viewer is the artist and the other user is the buyer. */
+  const [artistOrders, setArtistOrders] = React.useState<Order[]>([]);
+  /** Payment-request form state (artist side). */
+  const [payFormOpen, setPayFormOpen] = React.useState(false);
+  const [payFormOrderId, setPayFormOrderId] = React.useState<string>('');
+  const [snapshotFile, setSnapshotFile] = React.useState<File | null>(null);
+  const [payNote, setPayNote] = React.useState('');
+  const [requestingPayment, setRequestingPayment] = React.useState(false);
+  /** Which payment-request message is currently being paid (buyer side). */
+  const [payingId, setPayingId] = React.useState<string | null>(null);
+
+  const { mutate: mutateMyProfile } = useMyProfile();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const snapshotInputRef = React.useRef<HTMLInputElement>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const typingTimeoutRef = React.useRef<number | null>(null);
   const typingChannelRef = React.useRef<ReturnType<typeof createTypingChannel> | null>(null);
@@ -201,6 +227,27 @@ const Messages: React.FC = () => {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, otherTyping, loadingThread]);
 
+  // When a thread opens, check whether the viewer is the artist on any
+  // in-progress order with the other participant (enables "Request Payment").
+  const otherUserId = active?.other.id ?? null;
+  React.useEffect(() => {
+    if (!viewerId || !otherUserId) {
+      setArtistOrders([]);
+      return;
+    }
+    let cancelled = false;
+    fetchArtistOrdersWithBuyer(viewerId, otherUserId)
+      .then((orders) => {
+        if (!cancelled) setArtistOrders(orders.filter((o) => o.paid_credits < o.total_price));
+      })
+      .catch(() => {
+        if (!cancelled) setArtistOrders([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [viewerId, otherUserId, messages.length]);
+
   const openConversation = (id: string) => {
     setActiveId(id);
     setMobileThreadOpen(true);
@@ -212,11 +259,26 @@ const Messages: React.FC = () => {
   const handleSend = async () => {
     if (!viewerId || !activeId || sending) return;
     const body = draft.trim();
-    if (!body) return;
+    const files = pendingFiles;
+    if (!body && files.length === 0) return;
 
     setSending(true);
     setDraft('');
-    const { message, error: sendError } = await sendMessage(activeId, viewerId, body);
+
+    // Upload staged files first, then attach their public URLs to the message.
+    const attachments: MessageAttachment[] = [];
+    for (const file of files) {
+      const { url, error: uploadError } = await uploadMessageFile(viewerId, file);
+      if (uploadError || !url) {
+        setSending(false);
+        setDraft(body);
+        setError(uploadError ?? `Failed to upload ${file.name}.`);
+        return;
+      }
+      attachments.push({ url, name: file.name, type: file.type, size: file.size });
+    }
+
+    const { message, error: sendError } = await sendMessage(activeId, viewerId, body, attachments);
     setSending(false);
 
     if (sendError || !message) {
@@ -225,8 +287,74 @@ const Messages: React.FC = () => {
       return;
     }
     setError(null);
+    setPendingFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
     setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
     refreshList();
+  };
+
+  const handleFilesChosen = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const chosen = Array.from(e.target.files ?? []);
+    if (chosen.length === 0) return;
+    const MAX_SIZE = 10 * 1024 * 1024; // 10 MB per file
+    const tooBig = chosen.filter((f) => f.size > MAX_SIZE);
+    if (tooBig.length > 0) {
+      setError(`Files must be under 10 MB: ${tooBig.map((f) => f.name).join(', ')}`);
+      return;
+    }
+    setError(null);
+    setPendingFiles((prev) => [...prev, ...chosen].slice(0, 5));
+  };
+
+  const removePendingFile = (index: number) => {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  /** Artist: send a payment request with a required progress snapshot. */
+  const handleRequestPayment = async () => {
+    if (!viewerId || requestingPayment) return;
+    const order = artistOrders.find((o) => o.id === payFormOrderId) ?? artistOrders[0];
+    if (!order) return;
+    if (!snapshotFile) {
+      setError('A progress snapshot image is required to request a payment.');
+      return;
+    }
+
+    setRequestingPayment(true);
+    setError(null);
+    const { url, error: uploadError } = await uploadMessageFile(viewerId, snapshotFile);
+    if (uploadError || !url) {
+      setRequestingPayment(false);
+      setError(uploadError ?? 'Snapshot failed to upload.');
+      return;
+    }
+    const { error: reqError } = await requestPhasePayment(order.id, url, payNote);
+    setRequestingPayment(false);
+    if (reqError) {
+      setError(reqError);
+      return;
+    }
+    setPayFormOpen(false);
+    setSnapshotFile(null);
+    setPayNote('');
+    if (snapshotInputRef.current) snapshotInputRef.current.value = '';
+    if (activeId) fetchMessages(activeId).then(setMessages).catch(() => {});
+    refreshList();
+  };
+
+  /** Buyer: pay a pending payment request. */
+  const handlePay = async (messageId: string) => {
+    if (payingId) return;
+    setPayingId(messageId);
+    setError(null);
+    const { error: payError } = await payPhasePayment(messageId);
+    setPayingId(null);
+    if (payError) {
+      setError(payError);
+      return;
+    }
+    mutateMyProfile();
+    if (activeId) fetchMessages(activeId).then(setMessages).catch(() => {});
   };
 
   const handleDraftKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -347,7 +475,80 @@ const Messages: React.FC = () => {
                 >
                   {active.other.username}
                 </button>
+                {artistOrders.length > 0 && (
+                  <button
+                    type="button"
+                    className="msg-request-btn"
+                    onClick={() => {
+                      setPayFormOpen((v) => !v);
+                      setPayFormOrderId(artistOrders[0].id);
+                    }}
+                  >
+                    {payFormOpen ? 'Cancel' : 'Request Payment'}
+                  </button>
+                )}
               </header>
+
+              {payFormOpen && artistOrders.length > 0 && (() => {
+                const order = artistOrders.find((o) => o.id === payFormOrderId) ?? artistOrders[0];
+                const nextPhase = order.phases_paid + 1;
+                const due =
+                  order.payment_type === 'installments'
+                    ? phaseDue(order.total_price, order.phase_count, nextPhase)
+                    : order.total_price - order.paid_credits;
+                const fee = Math.max(1, Math.ceil(due * 0.1));
+                const phaseLabel = order.phases[nextPhase - 1] ?? `Phase ${nextPhase}`;
+                return (
+                  <div className="msg-payform" aria-label="Request a phase payment">
+                    {artistOrders.length > 1 && (
+                      <label className="msg-payform-field">
+                        <span>Commission</span>
+                        <select
+                          value={order.id}
+                          onChange={(e) => setPayFormOrderId(e.target.value)}
+                        >
+                          {artistOrders.map((o) => (
+                            <option key={o.id} value={o.id}>
+                              {o.title}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                    <p className="msg-payform-summary">
+                      {order.title} — {phaseLabel}: {due.toLocaleString()} credits (buyer pays{' '}
+                      {(due + fee).toLocaleString()} incl. fee)
+                    </p>
+                    <label className="msg-payform-field">
+                      <span>Progress snapshot (required)</span>
+                      <input
+                        ref={snapshotInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setSnapshotFile(e.target.files?.[0] ?? null)}
+                      />
+                    </label>
+                    <label className="msg-payform-field">
+                      <span>Note (optional)</span>
+                      <input
+                        type="text"
+                        value={payNote}
+                        onChange={(e) => setPayNote(e.target.value)}
+                        maxLength={300}
+                        placeholder={`Payment requested for ${phaseLabel}`}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="msg-pay-btn"
+                      onClick={handleRequestPayment}
+                      disabled={requestingPayment || !snapshotFile}
+                    >
+                      {requestingPayment ? 'Sending…' : 'Send Payment Request'}
+                    </button>
+                  </div>
+                );
+              })()}
 
               <div className="msg-scroll" ref={scrollRef}>
                 {loadingThread ? (
@@ -357,13 +558,105 @@ const Messages: React.FC = () => {
                 ) : (
                   messages.map((m, i) => {
                     const outgoing = m.sender_id === viewerId;
+
+                    if (m.kind === 'system') {
+                      return (
+                        <React.Fragment key={m.id}>
+                          {needsSeparator(messages[i - 1], m) && (
+                            <div className="msg-separator">{formatSeparator(m.created_at)}</div>
+                          )}
+                          <div className="msg-system">{m.body}</div>
+                        </React.Fragment>
+                      );
+                    }
+
+                    if (m.kind === 'payment_request') {
+                      const total = (m.payment_amount ?? 0) + (m.payment_fee ?? 0);
+                      const isBuyer = !outgoing;
+                      return (
+                        <React.Fragment key={m.id}>
+                          {needsSeparator(messages[i - 1], m) && (
+                            <div className="msg-separator">{formatSeparator(m.created_at)}</div>
+                          )}
+                          <div className={`msg-row ${outgoing ? 'out' : 'in'}`}>
+                            <div className="msg-payment-card">
+                              <span className="msg-payment-label">Payment Request</span>
+                              {m.snapshot_url && (
+                                <a href={m.snapshot_url} target="_blank" rel="noreferrer">
+                                  <img
+                                    className="msg-payment-snapshot"
+                                    src={m.snapshot_url || "/placeholder.svg"}
+                                    alt="Progress snapshot"
+                                    loading="lazy"
+                                  />
+                                </a>
+                              )}
+                              <p className="msg-payment-body">{m.body}</p>
+                              <p className="msg-payment-amount">
+                                {(m.payment_amount ?? 0).toLocaleString()} credits
+                                <span className="msg-payment-fee">
+                                  {' '}+ {(m.payment_fee ?? 0).toLocaleString()} fee = {total.toLocaleString()}
+                                </span>
+                              </p>
+                              {m.payment_status === 'paid' ? (
+                                <span className="msg-payment-paid">Paid</span>
+                              ) : isBuyer ? (
+                                <button
+                                  type="button"
+                                  className="msg-pay-btn"
+                                  onClick={() => handlePay(m.id)}
+                                  disabled={payingId === m.id}
+                                >
+                                  {payingId === m.id ? 'Paying…' : `Pay ${total.toLocaleString()} credits`}
+                                </button>
+                              ) : (
+                                <span className="msg-payment-pending">Awaiting payment</span>
+                              )}
+                            </div>
+                          </div>
+                        </React.Fragment>
+                      );
+                    }
+
                     return (
                       <React.Fragment key={m.id}>
                         {needsSeparator(messages[i - 1], m) && (
                           <div className="msg-separator">{formatSeparator(m.created_at)}</div>
                         )}
                         <div className={`msg-row ${outgoing ? 'out' : 'in'}`}>
-                          <div className="msg-bubble">{m.body}</div>
+                          <div className="msg-bubble">
+                            {m.attachments.length > 0 && (
+                              <div className="msg-attachments">
+                                {m.attachments.map((a) =>
+                                  a.type.startsWith('image/') ? (
+                                    <a key={a.url} href={a.url} target="_blank" rel="noreferrer">
+                                      <img
+                                        className="msg-attachment-img"
+                                        src={a.url || "/placeholder.svg"}
+                                        alt={a.name}
+                                        loading="lazy"
+                                      />
+                                    </a>
+                                  ) : (
+                                    <a
+                                      key={a.url}
+                                      className="msg-attachment-file"
+                                      href={a.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      download={a.name}
+                                    >
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+                                      </svg>
+                                      {a.name}
+                                    </a>
+                                  ),
+                                )}
+                              </div>
+                            )}
+                            {m.body && <span>{m.body}</span>}
+                          </div>
                         </div>
                         {outgoing && i === lastOutgoingIndex && (
                           <div className="msg-receipt">{m.read_at ? 'Read' : 'Delivered'}</div>
@@ -386,7 +679,47 @@ const Messages: React.FC = () => {
 
               {error && <p className="msg-error" role="alert">{error}</p>}
 
+              {pendingFiles.length > 0 && (
+                <div className="msg-pending-files" aria-label="Files to send">
+                  {pendingFiles.map((f, i) => (
+                    <span className="msg-pending-chip" key={`${f.name}-${i}`}>
+                      {f.type.startsWith('image/') ? (
+                        <img src={URL.createObjectURL(f) || "/placeholder.svg"} alt="" className="msg-pending-thumb" />
+                      ) : null}
+                      <span className="msg-pending-name">{f.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removePendingFile(i)}
+                        aria-label={`Remove ${f.name}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <div className="msg-composer">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.zip,.psd,.txt"
+                  className="sr-only"
+                  onChange={handleFilesChosen}
+                  aria-label="Attach files"
+                />
+                <button
+                  type="button"
+                  className="msg-attach-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label="Attach a file"
+                  title="Attach a file"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+                  </svg>
+                </button>
                 <textarea
                   className="msg-input"
                   value={draft}
@@ -401,7 +734,7 @@ const Messages: React.FC = () => {
                   type="button"
                   className="msg-send-btn"
                   onClick={handleSend}
-                  disabled={sending || draft.trim().length === 0}
+                  disabled={sending || (draft.trim().length === 0 && pendingFiles.length === 0)}
                 >
                   Send
                 </button>

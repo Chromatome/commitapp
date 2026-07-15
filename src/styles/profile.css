@@ -608,6 +608,32 @@
   }
 }
 
+/* ---------- Commission cards on profile (stock + edit) ---------- */
+.pf-comm-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pf-comm-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.pf-comm-stock {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.pf-field-hint {
+  font-size: 0.72rem;
+  color: #888;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 720px) {
   .pf-header {

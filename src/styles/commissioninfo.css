@@ -218,6 +218,37 @@
   margin: 0 0 1.25rem;
 }
 
+.ci-due-now {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0a0a0a;
+  margin: 0 0 0.35rem;
+}
+
+.ci-due-breakdown {
+  font-weight: 400;
+  color: #666;
+  margin-left: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.ci-stock {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2a6b2a;
+  margin: 0 0 1rem;
+}
+
+.ci-stock-out {
+  color: #b3261e;
+}
+
+.ci-purchase-error {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: #b3261e;
+}
+
 .ci-purchase-actions {
   display: flex;
   flex-direction: row;

@@ -17,6 +17,7 @@ export type Profile = {
   sales_count: number;
   about_me: string;
   avatar_url: string | null;
+  credits: number;
   created_at: string;
 };
 
@@ -42,6 +43,8 @@ export type Commission = {
   phases: string[];
   artist_terms: string;
   thumbnail_url: string | null;
+  /** Remaining purchase spots; null = unlimited. */
+  stock: number | null;
   created_at: string;
 };
 
@@ -67,7 +70,7 @@ export type ProfilePageData = {
 
 export async function fetchProfilePageData(userId: string): Promise<ProfilePageData> {
   const [profileRes, badgesRes, commissionsRes, reviewsRes] = await Promise.all([
-    supabase.from('profiles').select('id, username, reputation, sales_count, about_me, avatar_url, created_at').eq('id', userId).single(),
+    supabase.from('profiles').select('id, username, reputation, sales_count, about_me, avatar_url, credits, created_at').eq('id', userId).single(),
     supabase.from('profile_badges').select('badges(slug, name, description, icon)').eq('profile_id', userId),
     supabase
       .from('commissions')
@@ -210,6 +213,8 @@ export type NewCommissionInput = {
   tags: string[];
   phases: string[];
   artist_terms: string;
+  /** Remaining purchase spots; null = unlimited. */
+  stock: number | null;
 };
 
 /** Update the current user's own profile fields (username, about_me). */
@@ -255,7 +260,7 @@ export async function uploadAvatar(
 export async function fetchOwnProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, username, reputation, sales_count, about_me, avatar_url, created_at')
+    .select('id, username, reputation, sales_count, about_me, avatar_url, credits, created_at')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -279,10 +284,34 @@ export async function createCommission(
       tags: input.tags,
       phases: input.phases,
       artist_terms: input.artist_terms.trim(),
+      stock: input.stock,
     })
     .select('id')
     .single();
   return { id: data?.id ?? null, error: error ? error.message : null };
+}
+
+/** Update an existing commission listing (RLS restricts this to the owner). */
+export async function updateCommission(
+  commissionId: string,
+  input: NewCommissionInput,
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('commissions')
+    .update({
+      title: input.title.trim(),
+      price: input.price,
+      payment_type: input.payment_type,
+      split_upfront_percent: input.payment_type === 'split' ? input.split_upfront_percent : null,
+      time_taken: input.time_taken.trim(),
+      tags: input.tags,
+      phases: input.phases,
+      artist_terms: input.artist_terms.trim(),
+      stock: input.stock,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', commissionId);
+  return { error: error ? error.message : null };
 }
 
 /**
