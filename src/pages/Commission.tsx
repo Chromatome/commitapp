@@ -435,7 +435,9 @@ const CommissionInfo: React.FC = () => {
                   />
                 </div>
               </div>
-              {"This artist is reputable; some users reported small disagreements."}
+              <span className="ci-artist-review">
+                {"This artist is reputable; some users reported small disagreements."}
+              </span>
             </div>
           </div>
 
