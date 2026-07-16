@@ -11,6 +11,8 @@ import {
   fetchAllReports,
   fetchIsAdmin,
   updateReport,
+  adminDeleteCommission,
+  adminDeleteAccount,
   REPORT_STATUS_LABELS,
   type ReportStatus,
   type ReportWithProfiles,
@@ -37,6 +39,8 @@ const TicketCard: React.FC<{
   const [notesDraft, setNotesDraft] = useState(report.admin_notes ?? '');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<'commission' | 'account' | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const applyUpdate = async (updates: { status?: ReportStatus; admin_notes?: string }) => {
     if (saving) return;
@@ -46,6 +50,46 @@ const TicketCard: React.FC<{
     setSaving(false);
     if (error) {
       setSaveError(error);
+      return;
+    }
+    onUpdated();
+  };
+
+  const handleDeleteCommission = async () => {
+    if (deleting || !report.commission) return;
+    if (
+      !window.confirm(
+        `Permanently delete the commission "${report.commission.title}"? This can't be undone.`,
+      )
+    ) {
+      return;
+    }
+    setDeleting('commission');
+    setDeleteError(null);
+    const { error } = await adminDeleteCommission(report.commission.id);
+    setDeleting(null);
+    if (error) {
+      setDeleteError(error);
+      return;
+    }
+    onUpdated();
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleting || !report.reported) return;
+    if (
+      !window.confirm(
+        `Permanently delete @${report.reported.username}'s account? This can't be undone.`,
+      )
+    ) {
+      return;
+    }
+    setDeleting('account');
+    setDeleteError(null);
+    const { error } = await adminDeleteAccount(report.reported.id);
+    setDeleting(null);
+    if (error) {
+      setDeleteError(error);
       return;
     }
     onUpdated();
@@ -186,6 +230,33 @@ const TicketCard: React.FC<{
             {saveError && (
               <p className="ar-error" role="alert">
                 {saveError}
+              </p>
+            )}
+          </div>
+
+          <div className="ar-actions ar-danger-zone">
+            <h3 className="ar-section-title">Danger Zone</h3>
+            <div className="ar-action-buttons">
+              {report.target_type === 'commission' && report.commission && (
+                <Button
+                  label={deleting === 'commission' ? 'Deleting…' : 'Delete Commission'}
+                  color="var(--red)"
+                  disabled={deleting !== null}
+                  onClick={handleDeleteCommission}
+                />
+              )}
+              {report.reported && (
+                <Button
+                  label={deleting === 'account' ? 'Deleting…' : 'Delete Account'}
+                  color="var(--red)"
+                  disabled={deleting !== null}
+                  onClick={handleDeleteAccount}
+                />
+              )}
+            </div>
+            {deleteError && (
+              <p className="ar-error" role="alert">
+                {deleteError}
               </p>
             )}
           </div>

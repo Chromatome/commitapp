@@ -287,6 +287,12 @@
   color: #b3261e;
 }
 
+.ar-danger-zone {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed oklch(from var(--red) calc(l - 0.2) c h / 0.6);
+}
+
 @media (max-width: 600px) {
   .ar-ticket-date {
     display: none;

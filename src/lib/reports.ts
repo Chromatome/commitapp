@@ -201,3 +201,31 @@ export async function updateReport(
   const { error } = await supabase.from('reports').update(payload).eq('id', reportId);
   return { error: error ? error.message : null };
 }
+
+/**
+ * Admin: permanently delete the reported commission listing.
+ * Backed by the `admin_delete_commission` RPC (security definer, admin-only).
+ * The ticket itself is unaffected — commission_id is set null and the
+ * dashboard falls back to showing "Deleted commission".
+ */
+export async function adminDeleteCommission(commissionId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.rpc('admin_delete_commission', {
+    p_commission_id: commissionId,
+  });
+  return { error: error ? error.message : null };
+}
+
+/**
+ * Admin: permanently delete a profile (backed by the `admin_delete_account`
+ * RPC, security definer, admin-only). Note this removes the public.profiles
+ * row and anything that cascades from it, but not the underlying auth.users
+ * login — see the comment on the RPC for why. Because reports.reported_profile_id
+ * cascades on delete, any tickets against this account (including this one)
+ * disappear once it's gone.
+ */
+export async function adminDeleteAccount(profileId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.rpc('admin_delete_account', {
+    p_profile_id: profileId,
+  });
+  return { error: error ? error.message : null };
+}
