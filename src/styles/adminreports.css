@@ -1,0 +1,294 @@
+/* Styles for the admin report-tickets dashboard. */
+
+.admin-page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Lift page content above the shapegrid background canvas so it stays
+   clickable. A global `main { pointer-events: none }` rule (landingpage.css)
+   leaks into every page, so restore pointer events on direct children —
+   same pattern as .pf-body / .mp-body. */
+.ar-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.ar-body > * {
+  pointer-events: auto;
+}
+
+.ar-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ar-title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  font-family: Helvetica, sans-serif;
+}
+
+.ar-subtitle {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.ar-status-msg {
+  padding: 1.5rem 0;
+  text-align: center;
+  color: #555;
+}
+
+.ar-denied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 10px;
+  box-shadow: 6px 6px 0 var(--red);
+}
+
+.ar-denied h1 {
+  font-size: 1.5rem;
+  font-family: Helvetica, sans-serif;
+}
+
+/* ---------- Filters ---------- */
+.ar-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ar-filter {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.ar-filter:hover {
+  background: var(--gray-bg);
+}
+
+.ar-filter.active {
+  background: var(--blue);
+  box-shadow: 2px 2px 0 #000;
+}
+
+/* ---------- Ticket list ---------- */
+.ar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ar-ticket {
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ar-ticket-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.ar-ticket-summary:hover {
+  background: var(--gray-bg);
+}
+
+.ar-badge {
+  flex-shrink: 0;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border: 1px solid #000;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ar-badge-open {
+  background: var(--red);
+}
+
+.ar-badge-under_review {
+  background: var(--yellow);
+}
+
+.ar-badge-resolved {
+  background: var(--green);
+}
+
+.ar-badge-dismissed {
+  background: var(--gray-bg);
+}
+
+.ar-type {
+  flex-shrink: 0;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  border: 1px solid #000;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.ar-type-commission {
+  background: var(--indigo);
+}
+
+.ar-type-artist {
+  background: var(--pink);
+}
+
+.ar-ticket-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.ar-ticket-date {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.ar-caret {
+  flex-shrink: 0;
+  color: #666;
+}
+
+/* ---------- Ticket detail ---------- */
+.ar-ticket-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1rem;
+  border-top: 1px solid #000;
+  background: #fafafa;
+}
+
+.ar-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.ar-detail-item dt {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.ar-detail-item dd {
+  font-size: 0.95rem;
+}
+
+.ar-detail-item a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.ar-detail-wide {
+  grid-column: 1 / -1;
+}
+
+.ar-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.ar-section-title {
+  font-size: 1rem;
+  font-weight: bold;
+  font-family: Helvetica, sans-serif;
+  margin-bottom: 0.5rem;
+}
+
+.ar-proof-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ar-proof-thumb {
+  display: block;
+  width: 110px;
+  height: 110px;
+  border: 1px solid #000;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.15s ease-in-out;
+}
+
+.ar-proof-thumb:hover {
+  transform: translateY(-3px);
+}
+
+.ar-proof-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Moderation actions ---------- */
+.ar-notes {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  border: 1px solid #000;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.ar-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.ar-error {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #b3261e;
+}
+
+@media (max-width: 600px) {
+  .ar-ticket-date {
+    display: none;
+  }
+}

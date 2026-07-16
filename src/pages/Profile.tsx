@@ -8,6 +8,8 @@ import Navbar from '../components/Navbar';
 import Background from '../components/Background';
 import Button from '../components/Button';
 import { CommissionCard, type Commission as ListingCommission } from '../components/CommissionCard';
+import ReportModal from '../components/ReportModal';
+import { hasActiveReport } from '../lib/reports';
 import { useSession } from '../hooks/useSession';
 import { useMyProfile } from '../hooks/useMyProfile';
 import {
@@ -444,9 +446,21 @@ const Profile: React.FC = () => {
   const [savingAbout, setSavingAbout] = useState(false);
   const [aboutError, setAboutError] = useState<string | null>(null);
 
+  // Report artist state
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+
   const { data, error, isLoading, mutate } = useSWR(
     profileId ? ['profile-page', profileId] : null,
     () => fetchProfilePageData(profileId as string),
+  );
+
+  // Whether the viewer already has an active report against this artist —
+  // shared SWR key so it revalidates consistently across visits.
+  const { data: alreadyReportedArtist, mutate: mutateReported } = useSWR(
+    viewerId && profileId && viewerId !== profileId
+      ? ['artist-reported', viewerId, profileId]
+      : null,
+    () => hasActiveReport(viewerId as string, { reportedProfileId: profileId as string }),
   );
 
   if (checking) return null;
@@ -644,6 +658,14 @@ const Profile: React.FC = () => {
                 onClick={() => navigate(`/messages?with=${profileId}`)}
                 color="var(--gray-bg)"
               />
+              <button
+                type="button"
+                className="pf-report-link"
+                disabled={Boolean(alreadyReportedArtist)}
+                onClick={() => setReportModalOpen(true)}
+              >
+                {alreadyReportedArtist ? 'Report submitted — under review' : 'Report artist'}
+              </button>
             </div>
           )}
         </header>
@@ -834,6 +856,17 @@ const Profile: React.FC = () => {
           )}
         </section>
       </div>
+
+      {reportModalOpen && viewerId && profileId && !isOwnProfile && (
+        <ReportModal
+          targetType="artist"
+          reportedProfileId={profileId}
+          targetLabel={username}
+          reporterId={viewerId}
+          onClose={() => setReportModalOpen(false)}
+          onSubmitted={() => mutateReported(true, { revalidate: false })}
+        />
+      )}
     </div>
   );
 };

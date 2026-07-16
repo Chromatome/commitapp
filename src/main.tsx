@@ -11,6 +11,7 @@ import Profile from './pages/Profile.tsx'
 import Messages from './pages/Messages.tsx'
 import Dashboard from './pages/Dashboard.tsx'
 import Purchases from './pages/Purchases.tsx'
+import AdminReports from './pages/AdminReports.tsx'
 import RequireAuth from './components/RequireAuth.tsx'
 
 createRoot(document.getElementById('root')!).render(
@@ -70,6 +71,14 @@ createRoot(document.getElementById('root')!).render(
           element={
             <RequireAuth>
               <Purchases />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <RequireAuth>
+              <AdminReports />
             </RequireAuth>
           }
         />

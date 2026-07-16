@@ -12,6 +12,8 @@ import {
 } from '../lib/profileData';
 import { creditFee, purchaseCommission, upfrontDue } from '../lib/orders';
 import { fetchReviewEligibility, submitCommissionReview, type ReviewEligibility } from '../lib/reviews';
+import { fetchCommissionReportFlag, hasActiveReport } from '../lib/reports';
+import ReportModal from '../components/ReportModal';
 import { useSession } from '../hooks/useSession';
 import { useMyProfile } from '../hooks/useMyProfile';
 
@@ -53,6 +55,10 @@ const CommissionInfo: React.FC = () => {
   const [reviewSearch, setReviewSearch] = useState('');
   const [minRating, setMinRating] = useState(0);
   const [sort, setSort] = useState<ReviewSort>('recent');
+
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [openReportCount, setOpenReportCount] = useState(0);
+  const [alreadyReported, setAlreadyReported] = useState(false);
 
   const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
   const [reviewRating, setReviewRating] = useState(0);
@@ -109,6 +115,26 @@ const CommissionInfo: React.FC = () => {
       cancelled = true;
     };
   }, [commissionId, viewerId, data?.artist.id]);
+
+  // Load the public "reported" flag and whether the viewer already filed a
+  // still-active report against this commission.
+  useEffect(() => {
+    if (!commissionId) return;
+    let cancelled = false;
+    fetchCommissionReportFlag(commissionId)
+      .then((count) => {
+        if (!cancelled) setOpenReportCount(count);
+      })
+      .catch(() => {});
+    if (viewerId) {
+      hasActiveReport(viewerId, { commissionId }).then((reported) => {
+        if (!cancelled) setAlreadyReported(reported);
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [commissionId, viewerId]);
 
   const handleSubmitReview = async () => {
     if (!eligibility || submittingReview) return;
@@ -239,6 +265,13 @@ const CommissionInfo: React.FC = () => {
         <div className="ci-left">
           <div className="ci-purchase-card">
             <h1 className="ci-comm-title">{commission.title}</h1>
+            {openReportCount > 0 && (
+              <p className="ci-reported-flag" role="status">
+                <span aria-hidden="true">{'\u26A0'}</span> This commission has{' '}
+                {openReportCount === 1 ? 'an active report' : `${openReportCount} active reports`}{' '}
+                under review.
+              </p>
+            )}
             <p className="ci-comm-price">{priceCredits} Credits + Fee</p>
             <p className="ci-due-now">
               Due now: {totalDueNow.toLocaleString()} credits
@@ -274,6 +307,22 @@ const CommissionInfo: React.FC = () => {
                 color="var(--gray-bg)"
               />
             </div>
+            {!isOwnListing && (
+              <button
+                type="button"
+                className="ci-report-link"
+                disabled={alreadyReported}
+                onClick={() => {
+                  if (!viewerId) {
+                    navigate('/login');
+                    return;
+                  }
+                  setReportModalOpen(true);
+                }}
+              >
+                {alreadyReported ? 'Report submitted — under review' : 'Report this commission'}
+              </button>
+            )}
             {notEnoughCredits && !soldOut && !isOwnListing && (
               <p className="ci-purchase-error" role="alert">
                 You have {myProfile?.credits.toLocaleString()} credits — you need{' '}
@@ -568,6 +617,21 @@ const CommissionInfo: React.FC = () => {
           </section>
         </div>
       </div>
+
+      {reportModalOpen && viewerId && (
+        <ReportModal
+          targetType="commission"
+          commissionId={commission.id}
+          reportedProfileId={artist.id}
+          targetLabel={commission.title}
+          reporterId={viewerId}
+          onClose={() => setReportModalOpen(false)}
+          onSubmitted={() => {
+            setAlreadyReported(true);
+            setOpenReportCount((c) => c + 1);
+          }}
+        />
+      )}
     </div>
   );
 };

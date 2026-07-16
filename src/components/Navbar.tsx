@@ -11,7 +11,9 @@ import {
   subscribeToIncomingMessages,
   type ConversationSummary,
 } from '../lib/messages';
+import { fetchIsAdmin } from '../lib/reports';
 import { supabase } from '../lib/supabase';
+import useSWR from 'swr';
 
 /** Same "old-SMS style" short time label used on the messages page. */
 function formatPreviewTime(iso: string): string {
@@ -33,6 +35,11 @@ const Navbar: React.FC = () => {
 
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
+
+  // Admin badge check — cached via SWR so it's shared across pages.
+  const { data: isAdmin } = useSWR(viewerId ? ['is-admin', viewerId] : null, () =>
+    fetchIsAdmin(viewerId as string),
+  );
 
   const [notifOpen, setNotifOpen] = React.useState(false);
   const notifRef = React.useRef<HTMLDivElement>(null);
@@ -296,6 +303,16 @@ const Navbar: React.FC = () => {
               >
                 Settings
               </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="n-dropdown-item"
+                  role="menuitem"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Admin Dashboard
+                </Link>
+              )}
               <div className="n-dropdown-divider" role="separator" />
               <button
                 type="button"
