@@ -7,7 +7,13 @@
   flex-direction: column;
 }
 
+/* Lift page content above the shapegrid background canvas so it stays
+   clickable. A global `main { pointer-events: none }` rule (landingpage.css)
+   leaks into every page, so restore pointer events on direct children —
+   same pattern as .pf-body / .mp-body. */
 .ar-body {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -15,6 +21,10 @@
   max-width: 900px;
   margin: 0 auto;
   padding: 1.5rem 1rem 3rem;
+}
+
+.ar-body > * {
+  pointer-events: auto;
 }
 
 .ar-header {
