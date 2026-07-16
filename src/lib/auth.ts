@@ -97,3 +97,33 @@ export async function logInWithPassword(
   });
   return { error: error ? error.message : null };
 }
+
+/**
+ * Showcase-only: logs the browser in as a fixed demo account with a single
+ * click — the visitor never types anything.
+ *
+ * Under the hood this is a normal `signInWithPassword` call (the same one
+ * the real login form uses) against a dedicated demo account, using
+ * credentials read from env vars instead of a form.
+ *
+ * (An earlier version of this used `auth.admin.generateLink` +
+ * `verifyOtp` to avoid a password entirely, but Supabase reuses/caches
+ * that OTP token per user, so repeated clicks — expected for a public
+ * demo button — quickly hit "otp token has expired". Password sign-in
+ * has none of that caching behavior, so it's the reliable choice here.)
+ *
+ * Requires VITE_DEMO_USER_EMAIL and VITE_DEMO_USER_PASSWORD to be set —
+ * see the setup note in that env file / your hosting provider's env vars.
+ */
+const DEMO_USER_EMAIL = import.meta.env.VITE_DEMO_USER_EMAIL as string | undefined;
+const DEMO_USER_PASSWORD = import.meta.env.VITE_DEMO_USER_PASSWORD as string | undefined;
+
+export async function logInAsDemoUser(): Promise<AuthResult> {
+  if (!DEMO_USER_EMAIL || !DEMO_USER_PASSWORD) {
+    return {
+      error:
+        'Demo login is not configured. Set VITE_DEMO_USER_EMAIL and VITE_DEMO_USER_PASSWORD.',
+    };
+  }
+  return logInWithPassword({ email: DEMO_USER_EMAIL }, DEMO_USER_PASSWORD);
+}

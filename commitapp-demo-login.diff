@@ -1,0 +1,166 @@
+diff --git a/.env.example b/.env.example
+new file mode 100644
+index 0000000..2a00575
+--- /dev/null
++++ b/.env.example
+@@ -0,0 +1,16 @@
++# Copy this file to .env and fill in your values. .env is gitignored.
++
++VITE_SUPABASE_URL=
++VITE_SUPABASE_ANON_KEY=
++
++# Showcase-only: "Get Started" on the landing page signs visitors straight
++# into this account instead of sending them through signup. Create a
++# dedicated demo user in Supabase Auth (with whatever sample profile/data
++# you want visitors to see) and put its credentials here.
++#
++# Anyone who clicks "Get Started" gets full access to this account, so
++# treat it like a public demo — don't reuse the password anywhere else,
++# and don't put anything in this account you wouldn't want a stranger to
++# see or change.
++VITE_DEMO_USER_EMAIL=
++VITE_DEMO_USER_PASSWORD=
+diff --git a/src/components/Button.tsx b/src/components/Button.tsx
+index 60d33c3..d6a3edf 100644
+--- a/src/components/Button.tsx
++++ b/src/components/Button.tsx
+@@ -8,13 +8,14 @@ interface ButtonProps {
+     style?: React.CSSProperties;
+     type?: 'button' | 'submit' | 'reset';
+     disabled?: boolean;
++    isPrimary?: boolean;
+ }
+ 
+-const Button: React.FC<ButtonProps> = ({ label, onClick, color, style, type = 'button', disabled }) => {
++const Button: React.FC<ButtonProps> = ({ label, onClick, color, style, type = 'button', disabled, isPrimary = false }) => {
+     return (
+         <div className="btn-wrapper">
+             <button
+-                className="btn"
++                className={`btn ${isPrimary ? 'btn-primary' : ''}`}
+                 type={type}
+                 disabled={disabled}
+                 onClick={onClick}
+diff --git a/src/lib/auth.ts b/src/lib/auth.ts
+index 03a1d9a..b8fd25e 100644
+--- a/src/lib/auth.ts
++++ b/src/lib/auth.ts
+@@ -97,3 +97,33 @@ export async function logInWithPassword(
+   });
+   return { error: error ? error.message : null };
+ }
++
++/**
++ * Showcase-only: logs the browser in as a fixed demo account with a single
++ * click — the visitor never types anything.
++ *
++ * Under the hood this is a normal `signInWithPassword` call (the same one
++ * the real login form uses) against a dedicated demo account, using
++ * credentials read from env vars instead of a form.
++ *
++ * (An earlier version of this used `auth.admin.generateLink` +
++ * `verifyOtp` to avoid a password entirely, but Supabase reuses/caches
++ * that OTP token per user, so repeated clicks — expected for a public
++ * demo button — quickly hit "otp token has expired". Password sign-in
++ * has none of that caching behavior, so it's the reliable choice here.)
++ *
++ * Requires VITE_DEMO_USER_EMAIL and VITE_DEMO_USER_PASSWORD to be set —
++ * see the setup note in that env file / your hosting provider's env vars.
++ */
++const DEMO_USER_EMAIL = import.meta.env.VITE_DEMO_USER_EMAIL as string | undefined;
++const DEMO_USER_PASSWORD = import.meta.env.VITE_DEMO_USER_PASSWORD as string | undefined;
++
++export async function logInAsDemoUser(): Promise<AuthResult> {
++  if (!DEMO_USER_EMAIL || !DEMO_USER_PASSWORD) {
++    return {
++      error:
++        'Demo login is not configured. Set VITE_DEMO_USER_EMAIL and VITE_DEMO_USER_PASSWORD.',
++    };
++  }
++  return logInWithPassword({ email: DEMO_USER_EMAIL }, DEMO_USER_PASSWORD);
++}
+diff --git a/src/pages/LandingPage.tsx b/src/pages/LandingPage.tsx
+index 4850c5c..1cbff71 100644
+--- a/src/pages/LandingPage.tsx
++++ b/src/pages/LandingPage.tsx
+@@ -1,6 +1,6 @@
+ import '../styles/landingpage.css';
+ import React from 'react';
+-import { Navigate } from 'react-router';
++import { Navigate, useNavigate } from 'react-router';
+ // import logo from "../assets/logo.png";
+ import { gsap } from 'gsap';
+ import { ScrollTrigger } from 'gsap/ScrollTrigger';
+@@ -13,6 +13,7 @@ import Button from '../components/Button';
+ import CurvedLoop from '../components/CurvedLoop';
+ import logo2 from "../assets/commitsticker.png";
+ import "../styles/styles.css";
++import { logInAsDemoUser } from '../lib/auth';
+ 
+ gsap.registerPlugin(ScrollTrigger);
+ 
+@@ -20,6 +21,29 @@ const LandingPage: React.FC = () => {
+   const aboutRef = React.useRef<HTMLDivElement>(null);
+   const pageRef = React.useRef<HTMLDivElement>(null);
+   const { session, checking } = useSession();
++  const navigate = useNavigate();
++  const [demoLoading, setDemoLoading] = React.useState(false);
++  const [demoError, setDemoError] = React.useState<string | null>(null);
++
++  // Showcase-only: "Get Started" signs the visitor straight in as a demo
++  // account instead of sending them through signup. See src/lib/auth.ts
++  // (logInAsDemoUser) — requires VITE_DEMO_USER_EMAIL / VITE_DEMO_USER_PASSWORD
++  // to be set in the environment.
++  const handleGetStarted = async () => {
++    if (demoLoading) return;
++    setDemoError(null);
++    setDemoLoading(true);
++    try {
++      const { error } = await logInAsDemoUser();
++      if (error) {
++        setDemoError(error);
++        return;
++      }
++      navigate('/marketplace');
++    } finally {
++      setDemoLoading(false);
++    }
++  };
+ 
+   const toAboutSection = () => {
+     if (aboutRef.current) {
+@@ -134,9 +158,16 @@ const LandingPage: React.FC = () => {
+ 
+           {/* CTA Button */}
+           <div className="cta-buttons">
+-            <LinkButton label="Get Started" href="/login?mode=signup" isPrimary color="#ffc6ff"/>
++            <Button
++              label={demoLoading ? 'Loading…' : 'Get Started'}
++              onClick={handleGetStarted}
++              disabled={demoLoading}
++              isPrimary
++              color="#ffc6ff"
++            />
+             <Button label="Learn More" onClick={toAboutSection} color="var(--gray-bg) " />
+           </div>
++          {demoError && <p className="cta-error" role="alert">{demoError}</p>}
+         </section>
+ 
+         {/* Scrolling marquee divider */}
+diff --git a/src/styles/landingpage.css b/src/styles/landingpage.css
+index 4b5c088..c5e6d03 100644
+--- a/src/styles/landingpage.css
++++ b/src/styles/landingpage.css
+@@ -118,6 +118,12 @@
+     gap: 8px;
+   }
+ 
++  .cta-error {
++    margin-top: 8px;
++    color: var(--red, #d33);
++    font-size: 0.9rem;
++  }
++
+   /* Marquee Divider */
+   .landing-marquee {
+     pointer-events: all;

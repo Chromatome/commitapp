@@ -118,6 +118,12 @@
     gap: 8px;
   }
 
+  .cta-error {
+    margin-top: 8px;
+    color: var(--red, #d33);
+    font-size: 0.9rem;
+  }
+
   /* Marquee Divider */
   .landing-marquee {
     pointer-events: all;

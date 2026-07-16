@@ -1,6 +1,6 @@
 import '../styles/landingpage.css';
 import React from 'react';
-import { Navigate } from 'react-router';
+import { Navigate, useNavigate } from 'react-router';
 // import logo from "../assets/logo.png";
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -13,6 +13,7 @@ import Button from '../components/Button';
 import CurvedLoop from '../components/CurvedLoop';
 import logo2 from "../assets/commitsticker.png";
 import "../styles/styles.css";
+import { logInAsDemoUser } from '../lib/auth';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -20,6 +21,29 @@ const LandingPage: React.FC = () => {
   const aboutRef = React.useRef<HTMLDivElement>(null);
   const pageRef = React.useRef<HTMLDivElement>(null);
   const { session, checking } = useSession();
+  const navigate = useNavigate();
+  const [demoLoading, setDemoLoading] = React.useState(false);
+  const [demoError, setDemoError] = React.useState<string | null>(null);
+
+  // Showcase-only: "Get Started" signs the visitor straight in as a demo
+  // account instead of sending them through signup. See src/lib/auth.ts
+  // (logInAsDemoUser) — requires VITE_DEMO_USER_EMAIL / VITE_DEMO_USER_PASSWORD
+  // to be set in the environment.
+  const handleGetStarted = async () => {
+    if (demoLoading) return;
+    setDemoError(null);
+    setDemoLoading(true);
+    try {
+      const { error } = await logInAsDemoUser();
+      if (error) {
+        setDemoError(error);
+        return;
+      }
+      navigate('/marketplace');
+    } finally {
+      setDemoLoading(false);
+    }
+  };
 
   const toAboutSection = () => {
     if (aboutRef.current) {
@@ -134,9 +158,16 @@ const LandingPage: React.FC = () => {
 
           {/* CTA Button */}
           <div className="cta-buttons">
-            <LinkButton label="Get Started" href="/login?mode=signup" isPrimary color="#ffc6ff"/>
+            <Button
+              label={demoLoading ? 'Loading…' : 'Get Started'}
+              onClick={handleGetStarted}
+              disabled={demoLoading}
+              isPrimary
+              color="#ffc6ff"
+            />
             <Button label="Learn More" onClick={toAboutSection} color="var(--gray-bg) " />
           </div>
+          {demoError && <p className="cta-error" role="alert">{demoError}</p>}
         </section>
 
         {/* Scrolling marquee divider */}

@@ -8,13 +8,14 @@ interface ButtonProps {
     style?: React.CSSProperties;
     type?: 'button' | 'submit' | 'reset';
     disabled?: boolean;
+    isPrimary?: boolean;
 }
 
-const Button: React.FC<ButtonProps> = ({ label, onClick, color, style, type = 'button', disabled }) => {
+const Button: React.FC<ButtonProps> = ({ label, onClick, color, style, type = 'button', disabled, isPrimary = false }) => {
     return (
         <div className="btn-wrapper">
             <button
-                className="btn"
+                className={`btn ${isPrimary ? 'btn-primary' : ''}`}
                 type={type}
                 disabled={disabled}
                 onClick={onClick}
