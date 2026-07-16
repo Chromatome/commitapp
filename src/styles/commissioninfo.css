@@ -256,6 +256,38 @@
   gap: 0.75rem;
 }
 
+.ci-reported-flag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #6b3a00;
+  background: var(--orange);
+  border: 1px solid #000;
+  border-radius: 8px;
+}
+
+.ci-report-link {
+  margin-top: 0.75rem;
+  align-self: flex-start;
+  padding: 0;
+  font-size: 0.85rem;
+  color: #b3261e;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ci-report-link:disabled {
+  color: #888;
+  text-decoration: none;
+  cursor: default;
+}
+
 /* Shiny indie buttons (same recipe as the landing page .btn) */
 .ci-btn {
   --cb-color: var(--gray-bg);
